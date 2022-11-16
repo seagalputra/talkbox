@@ -22,7 +22,7 @@ func APIRoutes() *chi.Mux {
 	route := chi.NewRouter()
 
 	commentHandler := comment.DefaultHandler()
-	route.Post("/comments", commentHandler.Insert)
+	route.Post("/comments/{post_id}", commentHandler.Insert)
 
 	return route
 }

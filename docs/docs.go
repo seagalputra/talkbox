@@ -24,7 +24,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/comments": {
+        "/comments/{post_id}": {
             "post": {
                 "description": "create a new comment based on post slug",
                 "consumes": [
@@ -38,6 +38,13 @@ const docTemplate = `{
                 ],
                 "summary": "Insert a new comment",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post identifier",
+                        "name": "post_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "Insert comment request body",
                         "name": "request",
@@ -98,12 +105,47 @@ const docTemplate = `{
                 },
                 "body": {
                     "type": "string"
+                },
+                "parent_id": {
+                    "type": "string"
                 }
             }
         },
         "comment.InsertCommentRes": {
             "type": "object",
             "properties": {
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "attachment": {
+                            "type": "string"
+                        },
+                        "body": {
+                            "type": "string"
+                        },
+                        "created_at": {
+                            "type": "string"
+                        },
+                        "dislike_count": {
+                            "type": "integer"
+                        },
+                        "id": {
+                            "type": "string"
+                        },
+                        "like_count": {
+                            "type": "integer"
+                        },
+                        "parent_id": {
+                            "type": "string"
+                        },
+                        "post_id": {
+                            "type": "string"
+                        },
+                        "updated_at": {
+                            "type": "string"
+                        }
+                    }
+                },
                 "message": {
                     "type": "string"
                 },

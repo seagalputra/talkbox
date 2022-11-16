@@ -6,9 +6,32 @@ definitions:
         type: string
       body:
         type: string
+      parent_id:
+        type: string
     type: object
   comment.InsertCommentRes:
     properties:
+      data:
+        properties:
+          attachment:
+            type: string
+          body:
+            type: string
+          created_at:
+            type: string
+          dislike_count:
+            type: integer
+          id:
+            type: string
+          like_count:
+            type: integer
+          parent_id:
+            type: string
+          post_id:
+            type: string
+          updated_at:
+            type: string
+        type: object
       message:
         type: string
       status:
@@ -36,12 +59,17 @@ info:
   title: Talkbox
   version: "1.0"
 paths:
-  /comments:
+  /comments/{post_id}:
     post:
       consumes:
       - application/json
       description: create a new comment based on post slug
       parameters:
+      - description: Post identifier
+        in: path
+        name: post_id
+        required: true
+        type: string
       - description: Insert comment request body
         in: body
         name: request
