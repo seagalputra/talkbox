@@ -2,7 +2,6 @@ package comment
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"github.com/rs/xid"
@@ -66,7 +65,7 @@ func New(parentID *string, postID string, body string, attachment *string, moder
 }
 
 func Save(postID string, commentReq InsertCommentReq) (*Comment, error) {
-	spreadsheetID := os.Getenv("SPREADSHEET_ID")
+	spreadsheetID := config.AppConfig.SpreadsheetID
 	store := config.GetSheetDB(spreadsheetID, SHEET_NAME, Columns)
 	defer store.Close(context.Background())
 

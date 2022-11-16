@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,9 +13,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/joho/godotenv"
 	"github.com/seagalputra/talkbox/comment"
+	"github.com/seagalputra/talkbox/config"
 	_ "github.com/seagalputra/talkbox/docs"
+	"github.com/seagalputra/talkbox/utils"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -25,6 +27,17 @@ func APIRoutes() *chi.Mux {
 	route.Post("/comments/{post_id}", commentHandler.Insert)
 
 	return route
+}
+
+func notFoundHandler(w http.ResponseWriter, r *http.Request) {
+	errorRes := utils.ErrorRes{
+		Status:    utils.ERROR,
+		Message:   "The resource you looking for was not found",
+		ErrorCode: "ERR_NOT_FOUND",
+	}
+
+	w.WriteHeader(404)
+	json.NewEncoder(w).Encode(&errorRes)
 }
 
 // @title       Talkbox
@@ -54,16 +67,18 @@ func Handler() *chi.Mux {
 	})
 	route.Get("/docs/*", httpSwagger.Handler())
 
+	route.NotFound(notFoundHandler)
+
 	return route
 }
 
 func StartServer() {
-	err := godotenv.Load()
+	err := config.LoadAppConfig()
 	if err != nil {
 		log.Fatalf("Unable to load application configuration file: %v", err)
 	}
 
-	host := fmt.Sprintf("%s:%s", os.Getenv("HOST"), os.Getenv("PORT"))
+	host := fmt.Sprintf("%s:%s", config.AppConfig.Host, config.AppConfig.Port)
 	server := &http.Server{
 		Addr:    host,
 		Handler: Handler(),

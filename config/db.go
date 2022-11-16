@@ -2,7 +2,6 @@ package config
 
 import (
 	"log"
-	"os"
 
 	freedb "github.com/FreeLeh/GoFreeDB"
 	"github.com/FreeLeh/GoFreeDB/google/auth"
@@ -32,7 +31,7 @@ func GetSheetDB(spreadsheetID, sheetName string, columns []string) *freedb.Googl
 }
 
 func getAuthConfig() error {
-	serviceAccountPath := os.Getenv("SERVICE_ACCOUNT_PATH")
+	serviceAccountPath := AppConfig.ServiceAccountPath
 
 	var err error
 	DBAuth, err = auth.NewServiceFromFile(
