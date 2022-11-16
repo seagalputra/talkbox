@@ -1,0 +1,84 @@
+basePath: /api
+definitions:
+  comment.InsertCommentReq:
+    properties:
+      attachment:
+        type: string
+      body:
+        type: string
+    type: object
+  comment.InsertCommentRes:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  utils.ErrorRes:
+    properties:
+      error_code:
+        type: string
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a backend for Talkbox comment system.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Talkbox
+  version: "1.0"
+paths:
+  /comments:
+    post:
+      consumes:
+      - application/json
+      description: create a new comment based on post slug
+      parameters:
+      - description: Insert comment request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/comment.InsertCommentReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/comment.InsertCommentRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorRes'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorRes'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorRes'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorRes'
+      summary: Insert a new comment
+      tags:
+      - comments
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"
