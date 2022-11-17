@@ -9,7 +9,7 @@ import (
 
 var DBAuth *auth.Service
 
-func GetSheetDB(spreadsheetID, sheetName string, columns []string) *freedb.GoogleSheetRowStore {
+func GetSheetDB(sheetName string, columns []string) *freedb.GoogleSheetRowStore {
 	if DBAuth == nil {
 		err := getAuthConfig()
 
@@ -18,6 +18,7 @@ func GetSheetDB(spreadsheetID, sheetName string, columns []string) *freedb.Googl
 		}
 	}
 
+	spreadsheetID := AppConfig.SpreadsheetID
 	db := freedb.NewGoogleSheetRowStore(
 		DBAuth,
 		spreadsheetID,

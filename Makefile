@@ -1,4 +1,4 @@
-gen-docs:
+gen-docs: fmt-docs
 	swag init -g server.go
 
 fmt-docs:

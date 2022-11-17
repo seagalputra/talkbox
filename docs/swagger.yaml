@@ -1,5 +1,28 @@
 basePath: /api
 definitions:
+  comment.Comment:
+    properties:
+      attachment:
+        type: string
+      body:
+        type: string
+      created_at:
+        type: string
+      dislike_count:
+        type: integer
+      id:
+        type: string
+      like_count:
+        type: integer
+      moderated_by:
+        type: string
+      parent_id:
+        type: string
+      post_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
   comment.InsertCommentReq:
     properties:
       attachment:
@@ -12,28 +35,24 @@ definitions:
   comment.InsertCommentRes:
     properties:
       data:
-        properties:
-          attachment:
-            type: string
-          body:
-            type: string
-          created_at:
-            type: string
-          dislike_count:
-            type: integer
-          id:
-            type: string
-          like_count:
-            type: integer
-          parent_id:
-            type: string
-          post_id:
-            type: string
-          updated_at:
-            type: string
-        type: object
+        $ref: '#/definitions/comment.Comment'
       message:
         type: string
+      metadata:
+        type: object
+      status:
+        type: string
+    type: object
+  comment.ListCommentRes:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/comment.Comment'
+        type: array
+      message:
+        type: string
+      metadata:
+        type: object
       status:
         type: string
     type: object
@@ -59,6 +78,50 @@ info:
   title: Talkbox
   version: "1.0"
 paths:
+  /comments:
+    get:
+      consumes:
+      - application/json
+      description: Get all avaiable comments within list
+      parameters:
+      - description: Comment data in page
+        in: query
+        name: page
+        type: string
+      - description: Limit data per request
+        in: query
+        name: limit
+        type: string
+      - description: Search query for comment
+        in: query
+        name: search_query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/comment.ListCommentRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorRes'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorRes'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorRes'
+      summary: Get all comments
+      tags:
+      - comments
   /comments/{post_id}:
     post:
       consumes:

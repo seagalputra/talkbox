@@ -18,17 +18,7 @@ type (
 	InsertCommentRes struct {
 		utils.CommonRes
 
-		Data struct {
-			ID           string  `json:"id"`
-			ParentID     *string `json:"parent_id"`
-			PostID       string  `json:"post_id"`
-			Body         string  `json:"body"`
-			Attachment   *string `json:"attachment"`
-			LikeCount    int     `json:"like_count"`
-			DislikeCount int     `json:"dislike_count"`
-			CreatedAt    string  `json:"created_at"`
-			UpdatedAt    string  `json:"updated_at"`
-		} `json:"data"`
+		Data Comment `json:"data"`
 	}
 
 	UpdateCommentReq struct {
@@ -36,11 +26,23 @@ type (
 		Attachment *string `json:"attachment"`
 	}
 
+	ListCommentReq struct {
+		Page        string
+		Limit       string
+		SearchQuery string
+	}
+
+	ListCommentRes struct {
+		utils.CommonRes
+
+		Data []Comment `json:"data"`
+	}
+
 	Handler struct {
-		FindAllCommentFunc func() ([]Comment, error)
+		FindAllCommentFunc func(ListCommentReq) []Comment
 		InsertCommentFunc  func(string, InsertCommentReq) (*Comment, error)
 		DeleteCommentFunc  func(string) error
-		UpdateCommentFunc  func(string, UpdateCommentReq) error
+		UpdateCommentFunc  func(string, UpdateCommentReq) (*Comment, error)
 	}
 )
 
@@ -48,10 +50,12 @@ func DefaultHandler() Handler {
 	return Handler{
 		InsertCommentFunc:  Save,
 		FindAllCommentFunc: FindAll,
+		UpdateCommentFunc:  Update,
+		DeleteCommentFunc:  Remove,
 	}
 }
 
-// InsertComment
+// Insert
 // @Summary     Insert a new comment
 // @Description create a new comment based on post slug
 // @Tags        comments
@@ -105,7 +109,39 @@ func (f *Handler) Insert(w http.ResponseWriter, r *http.Request) {
 	jsonEncoder.Encode(&response)
 }
 
-func (f *Handler) FindAll(w http.ResponseWriter, r *http.Request) {}
+// FindAll
+// @Summary     Get all comments
+// @Description Get all avaiable comments within list
+// @Tags        comments
+// @Accept      json
+// @Produce     json
+// @Param       page         query    string false "Comment data in page"
+// @Param       limit        query    string false "Limit data per request"
+// @Param       search_query query    string false "Search query for comment"
+// @Success     200          {object} comment.ListCommentRes
+// @Failure     400          {object} utils.ErrorRes
+// @Failure     401          {object} utils.ErrorRes
+// @Failure     404          {object} utils.ErrorRes
+// @Failure     500          {object} utils.ErrorRes
+// @Router      /comments [get]
+func (f *Handler) FindAll(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	jsonEncoder := json.NewEncoder(w)
+
+	// page := r.URL.Query().Get("page")
+	// limit := r.URL.Query().Get("limit")
+	// searchQuery := r.URL.Query().Get("search_query")
+
+	listCommentReq := ListCommentReq{}
+	comments := f.FindAllCommentFunc(listCommentReq)
+
+	response := ListCommentRes{}
+	response.CommonRes.Status = utils.SUCCESS
+	response.Data = comments
+
+	w.WriteHeader(http.StatusOK)
+	jsonEncoder.Encode(&response)
+}
 
 func (f *Handler) Delete(w http.ResponseWriter, r *http.Request) {}
 

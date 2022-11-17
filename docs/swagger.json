@@ -17,6 +17,73 @@
     "host": "localhost:3000",
     "basePath": "/api",
     "paths": {
+        "/comments": {
+            "get": {
+                "description": "Get all avaiable comments within list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "Get all comments",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comment data in page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Limit data per request",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search query for comment",
+                        "name": "search_query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/comment.ListCommentRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorRes"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorRes"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorRes"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorRes"
+                        }
+                    }
+                }
+            }
+        },
         "/comments/{post_id}": {
             "post": {
                 "description": "create a new comment based on post slug",
@@ -90,6 +157,41 @@
         }
     },
     "definitions": {
+        "comment.Comment": {
+            "type": "object",
+            "properties": {
+                "attachment": {
+                    "type": "string"
+                },
+                "body": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "dislike_count": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "like_count": {
+                    "type": "integer"
+                },
+                "moderated_by": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "string"
+                },
+                "post_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "comment.InsertCommentReq": {
             "type": "object",
             "properties": {
@@ -108,39 +210,33 @@
             "type": "object",
             "properties": {
                 "data": {
-                    "type": "object",
-                    "properties": {
-                        "attachment": {
-                            "type": "string"
-                        },
-                        "body": {
-                            "type": "string"
-                        },
-                        "created_at": {
-                            "type": "string"
-                        },
-                        "dislike_count": {
-                            "type": "integer"
-                        },
-                        "id": {
-                            "type": "string"
-                        },
-                        "like_count": {
-                            "type": "integer"
-                        },
-                        "parent_id": {
-                            "type": "string"
-                        },
-                        "post_id": {
-                            "type": "string"
-                        },
-                        "updated_at": {
-                            "type": "string"
-                        }
+                    "$ref": "#/definitions/comment.Comment"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "type": "object"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "comment.ListCommentRes": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/comment.Comment"
                     }
                 },
                 "message": {
                     "type": "string"
+                },
+                "metadata": {
+                    "type": "object"
                 },
                 "status": {
                     "type": "string"

@@ -13,21 +13,11 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/seagalputra/talkbox/comment"
 	"github.com/seagalputra/talkbox/config"
 	_ "github.com/seagalputra/talkbox/docs"
 	"github.com/seagalputra/talkbox/utils"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
-
-func APIRoutes() *chi.Mux {
-	route := chi.NewRouter()
-
-	commentHandler := comment.DefaultHandler()
-	route.Post("/comments/{post_id}", commentHandler.Insert)
-
-	return route
-}
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	errorRes := utils.ErrorRes{

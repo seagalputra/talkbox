@@ -2,6 +2,7 @@ package comment
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/rs/xid"
@@ -12,17 +13,17 @@ type (
 	CommentColumns []string
 
 	Comment struct {
-		ID           string  `db:"id"`
-		ParentID     *string `db:"parent_id"`
-		PostID       string  `db:"post_id"`
-		Body         string  `db:"body"`
-		Attachment   *string `db:"attachment"`
-		LikeCount    int     `db:"like_count"`
-		DislikeCount int     `db:"dislike_count"`
-		ModeratedBy  string  `db:"moderated_by"`
-		CreatedAt    string  `db:"created_at"`
-		UpdatedAt    string  `db:"updated_at"`
-		DeletedAt    *string `db:"deleted_at"`
+		ID           string  `db:"id" json:"id"`
+		ParentID     *string `db:"parent_id" json:"parent_id"`
+		PostID       string  `db:"post_id" json:"post_id"`
+		Body         string  `db:"body" json:"body"`
+		Attachment   *string `db:"attachment" json:"attachment"`
+		LikeCount    int     `db:"like_count" json:"like_count"`
+		DislikeCount int     `db:"dislike_count" json:"dislike_count"`
+		ModeratedBy  string  `db:"moderated_by" json:"moderated_by"`
+		CreatedAt    string  `db:"created_at" json:"created_at"`
+		UpdatedAt    string  `db:"updated_at" json:"updated_at"`
+		DeletedAt    *string `db:"deleted_at" json:"-"`
 	}
 )
 
@@ -65,8 +66,7 @@ func New(parentID *string, postID string, body string, attachment *string, moder
 }
 
 func Save(postID string, commentReq InsertCommentReq) (*Comment, error) {
-	spreadsheetID := config.AppConfig.SpreadsheetID
-	store := config.GetSheetDB(spreadsheetID, SHEET_NAME, Columns)
+	store := config.GetSheetDB(SHEET_NAME, Columns)
 	defer store.Close(context.Background())
 
 	comment := New(
@@ -81,12 +81,31 @@ func Save(postID string, commentReq InsertCommentReq) (*Comment, error) {
 
 	err := store.Insert(comment).Exec(context.Background())
 	if err != nil {
+		log.Printf("Save: %v", err)
 		return nil, err
 	}
 
 	return &comment, nil
 }
 
-func FindAll() ([]Comment, error) {
+func FindAll(commentReq ListCommentReq) []Comment {
+	store := config.GetSheetDB(SHEET_NAME, Columns)
+	defer store.Close(context.Background())
+
+	var comments []Comment
+	err := store.Select(&comments).Exec(context.Background())
+	if err != nil {
+		log.Printf("FindAll: %v", err)
+		return []Comment{}
+	}
+
+	return comments
+}
+
+func Update(id string, commentReq UpdateCommentReq) (*Comment, error) {
+	panic("Not implemented yet!")
+}
+
+func Remove(id string) error {
 	panic("Not implemented yet!")
 }

@@ -2,8 +2,9 @@ package utils
 
 type (
 	CommonRes struct {
-		Status  string `json:"status"`
-		Message string `json:"message"`
+		Status   string   `json:"status"`
+		Message  string   `json:"message"`
+		Metadata struct{} `json:"metadata"`
 	}
 
 	ErrorRes struct {
