@@ -1,4 +1,4 @@
-package config
+package assets
 
 import (
 	"os"
@@ -9,10 +9,8 @@ import (
 
 type (
 	appConfig struct {
-		Host               string `env:"HOST"`
-		Port               string `env:"PORT"`
-		SpreadsheetID      string `env:"SPREADSHEET_ID"`
-		ServiceAccountPath string `env:"SERVICE_ACCOUNT_PATH"`
+		Port       string `env:"PORT"`
+		MongoDBURI string `env:"MONGODB_URI"`
 	}
 )
 
@@ -31,9 +29,7 @@ func LoadAppConfig() error {
 
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-
 		tag := field.Tag.Get(tagName)
-
 		osEnv := os.Getenv(tag)
 		reflect.ValueOf(&AppConfig).Elem().FieldByName(field.Name).SetString(osEnv)
 	}

@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  mongo:
+    image: mongo:6.0.3
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    volumes:
+      - ./scripts/setup-mongo.js:/docker-entrypoint-initdb.d/setup-mongo.js:ro
+    ports:
+      - "27017:27017"
+
+  redis:
+    image: redis:7.0.5
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
