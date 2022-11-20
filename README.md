@@ -12,6 +12,7 @@
   "last_name": "",
   "username": "",
   "email": "",
+  "avatar": "",
   "password": "",
   "created_at": "",
   "updated_at": "",

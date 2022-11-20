@@ -1,5 +1,5 @@
 {
-  "name": "@example/basics",
+  "name": "talkbox",
   "type": "module",
   "version": "0.0.1",
   "private": true,
@@ -11,18 +11,21 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/node": "^3.1.0",
     "@astrojs/react": "^1.2.2",
     "@astrojs/tailwind": "^2.1.2",
     "@types/react": "^18.0.21",
     "@types/react-dom": "^18.0.6",
+    "argon2": "^0.30.2",
     "astro": "^1.6.10",
+    "dotenv": "^16.0.3",
+    "mongodb": "^4.12.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "tailwindcss": "^3.0.24",
-    "ws": "^8.11.0"
+    "tailwindcss": "^3.0.24"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.3",
-    "@types/ws": "^8.5.3"
+    "@types/express": "^4.17.14"
   }
 }
