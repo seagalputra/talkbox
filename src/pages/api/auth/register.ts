@@ -1,12 +1,49 @@
 import argon2 from "argon2";
+import Joi from "joi";
 import type { Db } from "mongodb";
 import type { APIRoute } from "astro";
 import { getDb } from "../../../assets/mongo";
 
+const schema = Joi.object({
+  firstName: Joi.string().optional(),
+  lastName: Joi.string().optional(),
+  username: Joi.string().alphanum().min(3).max(30).required(),
+  password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")).required(),
+  passwordConfirmation: Joi.ref("password"),
+  email: Joi.string().email({ minDomainSegments: 2 }).required(),
+});
+
 export const post: APIRoute = async ({ request }) => {
   try {
-    const { username, email, firstName, lastName, password } =
-      await request.json();
+    const body = await request.json();
+
+    const {
+      firstName,
+      lastName,
+      username,
+      password,
+      passwordConfirmation,
+      email,
+    } = await schema.validateAsync(body, {
+      abortEarly: false,
+      errors: { escapeHtml: true },
+    });
+
+    if (password !== passwordConfirmation) {
+      return new Response(
+        JSON.stringify({
+          status: "error",
+          message:
+            "Your password doesn't match, please re-check your password again",
+        }),
+        {
+          status: 422,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
 
     const db: Db = await getDb();
     const users = db.collection("users");
@@ -63,6 +100,26 @@ export const post: APIRoute = async ({ request }) => {
     );
   } catch (err) {
     console.error(err);
+    if (err instanceof Joi.ValidationError) {
+      const errorDetails = err.details.map((detail) => ({
+        field: detail?.path[0],
+        message: detail?.message,
+      }));
+
+      return new Response(
+        JSON.stringify({
+          status: "error",
+          message: errorDetails,
+        }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
     return new Response(
       JSON.stringify({
         status: "error",
