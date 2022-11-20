@@ -1,5 +1,5 @@
 import { MongoClient } from "mongodb";
-import argon2 from "argon2";
+import bcrypt from 'bcryptjs'
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -11,7 +11,7 @@ async function run() {
   try {
     const db = client.db(process.env.DATABASE_NAME);
     const users = db.collection("users");
-    const passwordHash = await argon2.hash("password");
+    const passwordHash = await bcrypt.hash("password", 10);
     const john = {
       firstName: "John",
       lastName: "Doe",

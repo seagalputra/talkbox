@@ -1,8 +1,9 @@
-import argon2 from "argon2";
+import bcrypt from "bcryptjs";
 import Joi from "joi";
 import type { Db } from "mongodb";
 import type { APIRoute } from "astro";
 import { getDb } from "../../../assets/mongo";
+import { errorResponse, successResponse } from "../../../utils/api";
 
 const schema = Joi.object({
   firstName: Joi.string().optional(),
@@ -29,44 +30,26 @@ export const post: APIRoute = async ({ request }) => {
       errors: { escapeHtml: true },
     });
 
-    if (password !== passwordConfirmation) {
-      return new Response(
-        JSON.stringify({
-          status: "error",
-          message:
-            "Your password doesn't match, please re-check your password again",
-        }),
-        {
-          status: 422,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+    if (password !== passwordConfirmation)
+      return errorResponse(
+        null,
+        422,
+        "Your password doesn't match, please re-check your password again"
       );
-    }
 
     const db: Db = await getDb();
     const users = db.collection("users");
     const registeredUser = await users.findOne({
       $or: [{ username: { $eq: username } }, { email: { $eq: email } }],
     });
-    if (registeredUser) {
-      return new Response(
-        JSON.stringify({
-          status: "error",
-          message:
-            "User already registered, please use other email or username!",
-        }),
-        {
-          status: 422,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+    if (registeredUser)
+      return errorResponse(
+        null,
+        422,
+        "User already registered, please use other email or username!"
       );
-    }
 
-    const passwordHash = await argon2.hash(password);
+    const passwordHash = await bcrypt.hash(password, 10)
     const user = {
       firstName,
       lastName,
@@ -78,59 +61,17 @@ export const post: APIRoute = async ({ request }) => {
     };
     const insertedUser = await users.insertOne(user);
 
-    return new Response(
-      JSON.stringify({
-        status: "success",
-        data: {
-          id: insertedUser.insertedId,
-          firstName,
-          lastName,
-          username,
-          email,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
-        },
-      }),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    return successResponse({
+      id: insertedUser.insertedId,
+      firstName,
+      lastName,
+      username,
+      email,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    });
   } catch (err) {
     console.error(err);
-    if (err instanceof Joi.ValidationError) {
-      const errorDetails = err.details.map((detail) => ({
-        field: detail?.path[0],
-        message: detail?.message,
-      }));
-
-      return new Response(
-        JSON.stringify({
-          status: "error",
-          message: errorDetails,
-        }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
-
-    return new Response(
-      JSON.stringify({
-        status: "error",
-        message: "Your request can't be processed, please try again",
-      }),
-      {
-        status: 422,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    return errorResponse(err);
   }
 };
