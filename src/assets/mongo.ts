@@ -10,7 +10,7 @@ async function connectToDb(
   options: MongoClientOptions | undefined
 ) {
   const connection = await new MongoClient(url, options).connect();
-  return connection.db("talkbox");
+  return connection.db(config.databaseName);
 }
 
 async function getDb() {

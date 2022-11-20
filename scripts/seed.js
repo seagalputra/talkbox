@@ -49,6 +49,7 @@ async function run() {
     });
 
     const rooms = db.collection("rooms");
+    // TODO: fix this buggy where query
     const roomQuery = {
       $and: [
         { "participants.username": john.username },
@@ -96,4 +97,4 @@ async function run() {
   }
 }
 
-run().catch((err) => console.err(err));
+run().catch((err) => console.error(err));
