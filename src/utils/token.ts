@@ -25,9 +25,7 @@ function generateAuthToken(user: any): Promise<string | undefined> {
   });
 }
 
-function validateAuthToken(
-  token: string
-): Promise<string | JwtPayload | undefined> {
+function validateAuthToken(token: string): Promise<any> {
   return new Promise((resolve, reject) => {
     const secret: string = config.jwtSecret ?? "secret";
     jwt.verify(token, secret, function (err, decoded) {

@@ -11,9 +11,10 @@ const headers = {
 
 const defaultErrorMessage = "Your request can't be processed, please try again";
 
-function successResponse(body: object): Response {
+function successResponse(body: object, meta: any = {}): Response {
   const data = JSON.stringify({
     status: ResponseStatus.success,
+    meta,
     data: body,
   });
   return new Response(data, {
