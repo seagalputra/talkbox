@@ -1,7 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"log"
+
+	"github.com/seagalputra/talkbox/api"
+)
 
 func main() {
-	fmt.Println("Hello, Talkbox!")
+	if err := api.StartServer(); err != nil {
+		log.Panicf("Failed to start the server: %v", err)
+	}
 }
