@@ -42,6 +42,7 @@ func StartServer() error {
 	if err := ConnectDatabase(); err != nil {
 		log.Fatalf("StartServer: %v", err)
 	}
+	ConnectToRedis()
 
 	r := gin.Default()
 	r.GET("/", func(ctx *gin.Context) {

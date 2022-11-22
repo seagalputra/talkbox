@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/go-redis/redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -25,4 +26,12 @@ func ConnectDatabase() error {
 	MongoDatabase = MongoClient.Database(dbName)
 
 	return nil
+}
+
+var RedisClient *redis.Client
+
+func ConnectToRedis() {
+	RedisClient = redis.NewClient(&redis.Options{
+		Addr: AppConfig.RedisHost,
+	})
 }

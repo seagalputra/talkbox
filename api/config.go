@@ -13,6 +13,7 @@ type (
 		DatabaseName string `env:"DATABASE_NAME"`
 		JwtSecret    string `env:"JWT_SECRET"`
 		ServerPort   string `env:"SERVER_PORT"`
+		RedisHost    string `end:"REDIS_HOST"`
 	}
 )
 
