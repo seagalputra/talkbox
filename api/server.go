@@ -45,13 +45,15 @@ func StartServer() error {
 	ConnectToRedis()
 
 	userHandler := &UserFunc{
-		RegisterFunc: RegisterUser,
+		RegisterFunc:           RegisterUser,
+		ConfirmUserAccountFunc: ConfirmUserAccount,
 	}
 	r := gin.Default()
 	api := r.Group("api")
 	v1 := api.Group("v1")
 	{
 		v1.POST("/auth/register", userHandler.RegisterUserHandler)
+		v1.GET("/users/confirm_account", userHandler.ConfirmUserAccountHandler)
 	}
 
 	r.GET("/ws", func(ctx *gin.Context) {

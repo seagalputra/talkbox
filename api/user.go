@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -27,12 +28,13 @@ type (
 		PasswordConfirmation string  `json:"passwordConfirmation" validate:"required"`
 	}
 
-	RegisterUserOutput struct {
-		User
-	}
+	LoginUserInput  struct{}
+	LoginUserOutput struct{}
 
 	UserFunc struct {
-		RegisterFunc func(RegisterUserInput) error
+		RegisterFunc           func(RegisterUserInput) error
+		LoginFunc              func(LoginUserInput) LoginUserOutput
+		ConfirmUserAccountFunc func(string) (*User, error)
 	}
 
 	UserStatus string
@@ -88,6 +90,36 @@ func (u *User) IsAvailable() (bool, error) {
 	return true, nil
 }
 
+func UpdateUserToActive(id string) (*User, error) {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, fmt.Errorf("[FindUserByID] %v", err)
+	}
+	filter := bson.M{
+		"_id": objID,
+	}
+
+	coll := MongoDatabase.Collection(users)
+
+	updatedField := bson.M{
+		"$set": bson.M{
+			"status":    Active,
+			"updatedAt": time.Now(),
+		},
+	}
+	_, err = coll.UpdateByID(context.Background(), objID, updatedField)
+	if err != nil {
+		return nil, fmt.Errorf("[FindUserByID] %v", err)
+	}
+
+	var user User
+	if err := coll.FindOne(context.Background(), filter).Decode(&user); err != nil {
+		return nil, fmt.Errorf("[FindUserByID] %v", err)
+	}
+
+	return &user, nil
+}
+
 func RegisterUser(input RegisterUserInput) error {
 	user := &User{
 		FirstName: input.FirstName,
@@ -124,11 +156,11 @@ func RegisterUser(input RegisterUserInput) error {
 	}
 
 	token := GenRandString(20)
-	fmtToken := fmt.Sprintf("%s$%s", user.ID.String(), token)
+	fmtToken := fmt.Sprintf("%s$%s", user.ID.Hex(), token)
 	encToken := base64.StdEncoding.EncodeToString([]byte(fmtToken))
-	cacheKey := fmt.Sprintf("email_confirmation:%s", user.ID.String())
+	cacheKey := fmt.Sprintf("email_confirmation:%s", user.ID.Hex())
 	exp := time.Duration(1) * time.Hour
-	optStatus := RedisClient.Set(context.Background(), cacheKey, encToken, exp)
+	optStatus := RedisClient.Set(context.Background(), cacheKey, token, exp)
 	if err := optStatus.Err(); err != nil {
 		log.Printf("[RegisterUser] %v", err)
 		return err
@@ -180,7 +212,7 @@ func (f *UserFunc) RegisterUserHandler(ctx *gin.Context) {
 		log.Printf("[UserFunc.RegisterUserHander] %v", err)
 		ctx.JSON(422, gin.H{
 			"status":  "error",
-			"message": "failed to register the user",
+			"message": "Failed to register the user",
 		})
 		return
 	}
@@ -190,7 +222,7 @@ func (f *UserFunc) RegisterUserHandler(ctx *gin.Context) {
 		log.Printf("[UserFunc.RegisterUserHander] %v", err)
 		ctx.JSON(422, gin.H{
 			"status":  "error",
-			"message": "failed to register the user",
+			"message": "Failed to register the user",
 		})
 		return
 	}
@@ -198,5 +230,66 @@ func (f *UserFunc) RegisterUserHandler(ctx *gin.Context) {
 	ctx.JSON(201, gin.H{
 		"status":  "success",
 		"message": "User successfully registered, please check your email to confirm your account",
+	})
+}
+
+func ConfirmUserAccount(token string) (*User, error) {
+	decodedToken, err := base64.StdEncoding.DecodeString(token)
+	if err != nil {
+		return nil, fmt.Errorf("[ConfirmUserAccount] %v", err)
+	}
+
+	lst := strings.Split(string(decodedToken), "$")
+	userID := lst[0]
+	userToken := lst[1]
+
+	cacheKey := fmt.Sprintf("email_confirmation:%s", userID)
+
+	opts := RedisClient.Get(context.Background(), cacheKey)
+	cacheToken, err := opts.Result()
+	if err != nil {
+		return nil, fmt.Errorf("[ConfirmUserAccount] %v", err)
+	}
+
+	if cacheToken != userToken {
+		return nil, fmt.Errorf("[ConfirmUserAccount] %v", err)
+	}
+
+	user, err := UpdateUserToActive(userID)
+	if err != nil {
+		return nil, fmt.Errorf("[ConfirmUserAccount] %v", err)
+	}
+
+	if delOpts := RedisClient.Del(context.Background(), cacheKey); delOpts.Err() != nil {
+		return nil, fmt.Errorf("[ConfirmUserAccount] %v", err)
+	}
+
+	return user, nil
+}
+
+func (f *UserFunc) ConfirmUserAccountHandler(ctx *gin.Context) {
+	token := ctx.Query("token")
+	if token == "" {
+		ctx.JSON(422, gin.H{
+			"status":  "error",
+			"message": "Token is missing, please provide correct email confirmation token",
+		})
+		return
+	}
+
+	user, err := f.ConfirmUserAccountFunc(token)
+	if err != nil {
+		log.Printf("[UserFunc.ConfirmUserAccountHandler] %v", err)
+		ctx.JSON(422, gin.H{
+			"status":  "error",
+			"message": "Failed to confirm user account, token has invalid",
+		})
+		return
+	}
+
+	ctx.JSON(200, gin.H{
+		"status":  "success",
+		"message": "User confirmed successfully",
+		"data":    user,
 	})
 }
