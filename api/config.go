@@ -9,11 +9,17 @@ import (
 
 type (
 	appConfig struct {
-		DatabaseURL  string `env:"DATABASE_URL"`
-		DatabaseName string `env:"DATABASE_NAME"`
-		JwtSecret    string `env:"JWT_SECRET"`
-		ServerPort   string `env:"SERVER_PORT"`
-		RedisHost    string `end:"REDIS_HOST"`
+		DatabaseURL          string `env:"DATABASE_URL"`
+		DatabaseName         string `env:"DATABASE_NAME"`
+		JwtSecret            string `env:"JWT_SECRET"`
+		ServerPort           string `env:"SERVER_PORT"`
+		RedisHost            string `env:"REDIS_HOST"`
+		SMTPHost             string `env:"SMTP_HOST"`
+		SMTPPort             string `env:"SMTP_PORT"`
+		SMTPUsername         string `env:"SMTP_USERNAME"`
+		SMTPPassword         string `env:"SMTP_PASSWORD"`
+		EmailSenderName      string `env:"EMAIL_SENDER_NAME"`
+		EmailConfirmationURL string `env:"EMAIL_CONFIRMATION_URL"`
 	}
 )
 

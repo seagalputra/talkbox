@@ -44,12 +44,16 @@ func StartServer() error {
 	}
 	ConnectToRedis()
 
+	userHandler := &UserFunc{
+		RegisterFunc: RegisterUser,
+	}
 	r := gin.Default()
-	r.GET("/", func(ctx *gin.Context) {
-		ctx.JSON(200, gin.H{
-			"message": "Hello from Talkbox",
-		})
-	})
+	api := r.Group("api")
+	v1 := api.Group("v1")
+	{
+		v1.POST("/auth/register", userHandler.RegisterUserHandler)
+	}
+
 	r.GET("/ws", func(ctx *gin.Context) {
 		wsHandler(ctx.Writer, ctx.Request)
 	})

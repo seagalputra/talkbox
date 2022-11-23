@@ -6,11 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/url"
+	"strconv"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/gomail.v2"
 )
 
 type (
@@ -28,13 +32,13 @@ type (
 	}
 
 	UserFunc struct {
-		RegisterFunc func(RegisterUserInput) *RegisterUserOutput
+		RegisterFunc func(RegisterUserInput) error
 	}
 
 	UserStatus string
 
 	User struct {
-		ID        primitive.ObjectID `bson:"_id" json:"id"`
+		ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 		FirstName string             `bson:"firstName" json:"firstName"`
 		LastName  *string            `bson:"lastName" json:"lastName"`
 		Username  string             `bson:"username" json:"username"`
@@ -42,9 +46,9 @@ type (
 		Avatar    *string            `bson:"avatar" json:"avatar"`
 		Password  string             `bson:"password" json:"-"`
 		Status    UserStatus         `bson:"status" json:"-"`
-		CreatedAt *time.Time         `bson:"createdAt" json:"createdAt"`
-		UpdatedAt *time.Time         `bson:"updatedAt" json:"updatedAt"`
-		DeletedAt *time.Time         `bson:"deletedAt" json:"deletedAt"`
+		CreatedAt time.Time          `bson:"createdAt,omitempty" json:"createdAt"`
+		UpdatedAt time.Time          `bson:"updatedAt,omitempty" json:"updatedAt"`
+		DeletedAt time.Time          `bson:"deletedAt,omitempty" json:"deletedAt"`
 	}
 )
 
@@ -56,6 +60,8 @@ const (
 )
 
 func (u *User) Save() error {
+	u.CreatedAt = time.Now()
+	u.UpdatedAt = time.Now()
 	res, err := MongoDatabase.Collection(users).InsertOne(context.TODO(), u)
 	if err != nil {
 		return err
@@ -70,13 +76,12 @@ func (u *User) IsAvailable() (bool, error) {
 		"username": u.Username,
 	}
 
-	var result bson.M
-	err := MongoDatabase.Collection(users).FindOne(context.TODO(), filter).Decode(&result)
+	count, err := MongoDatabase.Collection(users).CountDocuments(context.TODO(), filter)
 	if err != nil {
 		return false, err
 	}
 
-	if result["email"] != nil || result["username"] != nil {
+	if count > 0 {
 		return false, nil
 	}
 
@@ -89,6 +94,7 @@ func RegisterUser(input RegisterUserInput) error {
 		LastName:  input.LastName,
 		Username:  input.Username,
 		Email:     input.Email,
+		Status:    Inactive,
 	}
 
 	isAvailable, err := user.IsAvailable()
@@ -118,15 +124,79 @@ func RegisterUser(input RegisterUserInput) error {
 	}
 
 	token := GenRandString(20)
-	fmtToken := fmt.Sprintf("%s$%s", user.ID, token)
+	fmtToken := fmt.Sprintf("%s$%s", user.ID.String(), token)
 	encToken := base64.StdEncoding.EncodeToString([]byte(fmtToken))
-	cacheKey := fmt.Sprintf("email_confirmation:%s", user.ID)
+	cacheKey := fmt.Sprintf("email_confirmation:%s", user.ID.String())
 	exp := time.Duration(1) * time.Hour
 	optStatus := RedisClient.Set(context.Background(), cacheKey, encToken, exp)
 	if err := optStatus.Err(); err != nil {
 		log.Printf("[RegisterUser] %v", err)
 		return err
 	}
-	// TODO: send email as confirmation email
+	go sendConfirmationEmail(user.Email, encToken)
 	return nil
+}
+
+func sendConfirmationEmail(to, token string) {
+	urlVal := url.Values{}
+	urlVal.Set("token", token)
+	// TODO: move body email to html file
+	body := fmt.Sprintf(`
+	<div>
+		<p>Click link below to verify your account</p>
+		<p>%s</p>
+	</div>
+	`, AppConfig.EmailConfirmationURL+"?"+urlVal.Encode())
+
+	mailer := gomail.NewMessage()
+	mailer.SetHeader("From", AppConfig.EmailSenderName)
+	mailer.SetHeader("To", to)
+	mailer.SetHeader("Subject", "Verify your account - Talkbox")
+	mailer.SetBody("text/html", body)
+
+	smtpPort, err := strconv.Atoi(AppConfig.SMTPPort)
+	if err != nil {
+		log.Printf("[sendConfirmationEmail] %v", err)
+		return
+	}
+
+	dialer := gomail.NewDialer(
+		AppConfig.SMTPHost,
+		smtpPort,
+		AppConfig.SMTPUsername,
+		AppConfig.SMTPPassword,
+	)
+
+	if err = dialer.DialAndSend(mailer); err != nil {
+		log.Printf("[sendConfirmationEmail] %v", err)
+		return
+	}
+	log.Printf("[sendConfirmationEmail] Confirmation email successfully sent to %s", to)
+}
+
+func (f *UserFunc) RegisterUserHandler(ctx *gin.Context) {
+	input := RegisterUserInput{}
+	if err := ctx.ShouldBind(&input); err != nil {
+		log.Printf("[UserFunc.RegisterUserHander] %v", err)
+		ctx.JSON(422, gin.H{
+			"status":  "error",
+			"message": "failed to register the user",
+		})
+		return
+	}
+
+	err := f.RegisterFunc(input)
+	if err != nil {
+		log.Printf("[UserFunc.RegisterUserHander] %v", err)
+		ctx.JSON(422, gin.H{
+			"status":  "error",
+			"message": "failed to register the user",
+		})
+		return
+	}
+
+	ctx.JSON(201, gin.H{
+		"status":  "success",
+		"message": "User successfully registered, please check your email to confirm your account",
+	})
 }
