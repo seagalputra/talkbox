@@ -12,8 +12,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/gomail.v2"
 )
@@ -68,6 +70,13 @@ const (
 	users string = "users"
 )
 
+var (
+	AppName          = "talkbox"
+	LoginExpDuration = time.Duration(730) * time.Hour
+	JwtSigningMethod = jwt.SigningMethodHS256
+	JwtSecretKey     = []byte(AppConfig.JwtSecret)
+)
+
 func (u *User) Save() error {
 	u.CreatedAt = time.Now()
 	u.UpdatedAt = time.Now()
@@ -116,12 +125,25 @@ func UpdateUserToActive(id string) (*User, error) {
 	}
 	_, err = coll.UpdateByID(context.Background(), objID, updatedField)
 	if err != nil {
-		return nil, fmt.Errorf("[FindUserByID] %v", err)
+		return nil, fmt.Errorf("[UpdateUserToActive] %v", err)
 	}
 
 	var user User
 	if err := coll.FindOne(context.Background(), filter).Decode(&user); err != nil {
-		return nil, fmt.Errorf("[FindUserByID] %v", err)
+		return nil, fmt.Errorf("[UpdateUserToActive] %v", err)
+	}
+
+	return &user, nil
+}
+
+func FindUserByUsername(username string) (*User, error) {
+	filter := bson.M{
+		"username": username,
+	}
+
+	var user User
+	if err := MongoDatabase.Collection(users).FindOne(context.Background(), filter).Decode(&user); err != nil {
+		return nil, err
 	}
 
 	return &user, nil
@@ -310,7 +332,44 @@ func (f *UserFunc) ConfirmUserAccountHandler(ctx *gin.Context) {
 }
 
 func Login(input LoginUserInput) (LoginUserOutput, error) {
-	panic("Not implemented")
+	user, err := FindUserByUsername(input.Username)
+	if err != nil {
+		return LoginUserOutput{}, err
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
+		return LoginUserOutput{}, err
+	}
+
+	claims := struct {
+		jwt.StandardClaims
+		ID        string `json:"id"`
+		FirstName string `json:"firstName"`
+		LastName  string `json:"lastName"`
+		Username  string `json:"username"`
+		Email     string `json:"email"`
+	}{
+		StandardClaims: jwt.StandardClaims{
+			Issuer:    AppName,
+			ExpiresAt: time.Now().Add(LoginExpDuration).Unix(),
+		},
+		ID:        user.ID.Hex(),
+		FirstName: user.FirstName,
+		LastName:  *user.LastName,
+		Username:  user.Username,
+		Email:     user.Email,
+	}
+
+	token := jwt.NewWithClaims(JwtSigningMethod, claims)
+	signedToken, err := token.SignedString(JwtSecretKey)
+	if err != nil {
+		return LoginUserOutput{}, err
+	}
+
+	return LoginUserOutput{
+		User:      *user,
+		AuthToken: signedToken,
+	}, nil
 }
 
 func (f *UserFunc) LoginHandler(ctx *gin.Context) {
@@ -327,6 +386,22 @@ func (f *UserFunc) LoginHandler(ctx *gin.Context) {
 	loginOut, err := f.LoginFunc(input)
 	if err != nil {
 		log.Printf("[UserFunc.LoginHandler] %v", err)
+		if err == mongo.ErrNoDocuments {
+			ctx.JSON(422, gin.H{
+				"status":  "error",
+				"message": "Failed authenticate user, please check your username/password",
+			})
+			return
+		}
+
+		if err == bcrypt.ErrMismatchedHashAndPassword {
+			ctx.JSON(422, gin.H{
+				"status":  "error",
+				"message": "Failed authenticate user, please check your username/password",
+			})
+			return
+		}
+
 		ctx.JSON(422, gin.H{
 			"status":  "error",
 			"message": "User authentication failed, not authorized",
