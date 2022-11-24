@@ -28,12 +28,19 @@ type (
 		PasswordConfirmation string  `json:"passwordConfirmation" validate:"required"`
 	}
 
-	LoginUserInput  struct{}
-	LoginUserOutput struct{}
+	LoginUserInput struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	LoginUserOutput struct {
+		User
+		AuthToken string `json:"authToken"`
+	}
 
 	UserFunc struct {
 		RegisterFunc           func(RegisterUserInput) error
-		LoginFunc              func(LoginUserInput) LoginUserOutput
+		LoginFunc              func(LoginUserInput) (LoginUserOutput, error)
 		ConfirmUserAccountFunc func(string) (*User, error)
 	}
 
@@ -206,6 +213,14 @@ func sendConfirmationEmail(to, token string) {
 	log.Printf("[sendConfirmationEmail] Confirmation email successfully sent to %s", to)
 }
 
+func UserDefaultHandler() *UserFunc {
+	return &UserFunc{
+		RegisterFunc:           RegisterUser,
+		ConfirmUserAccountFunc: ConfirmUserAccount,
+		LoginFunc:              Login,
+	}
+}
+
 func (f *UserFunc) RegisterUserHandler(ctx *gin.Context) {
 	input := RegisterUserInput{}
 	if err := ctx.ShouldBind(&input); err != nil {
@@ -291,5 +306,37 @@ func (f *UserFunc) ConfirmUserAccountHandler(ctx *gin.Context) {
 		"status":  "success",
 		"message": "User confirmed successfully",
 		"data":    user,
+	})
+}
+
+func Login(input LoginUserInput) (LoginUserOutput, error) {
+	panic("Not implemented")
+}
+
+func (f *UserFunc) LoginHandler(ctx *gin.Context) {
+	input := LoginUserInput{}
+	if err := ctx.ShouldBind(&input); err != nil {
+		log.Printf("[UserFunc.LoginHandler] %v", err)
+		ctx.JSON(400, gin.H{
+			"status":  "error",
+			"message": "User authentication failed, please check your request data",
+		})
+		return
+	}
+
+	loginOut, err := f.LoginFunc(input)
+	if err != nil {
+		log.Printf("[UserFunc.LoginHandler] %v", err)
+		ctx.JSON(422, gin.H{
+			"status":  "error",
+			"message": "User authentication failed, not authorized",
+		})
+		return
+	}
+
+	ctx.JSON(200, gin.H{
+		"status":  "success",
+		"message": "User authenticated",
+		"data":    loginOut,
 	})
 }
