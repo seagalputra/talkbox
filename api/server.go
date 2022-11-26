@@ -52,6 +52,16 @@ func StartServer() error {
 		v1.POST("/auth/register", userHandler.RegisterUserHandler)
 		v1.POST("/auth/login", userHandler.LoginHandler)
 		v1.GET("/users/confirm_account", userHandler.ConfirmUserAccountHandler)
+		v1.GET("/ping", AuthenticateUser(), func(ctx *gin.Context) {
+			userCtx, _ := ctx.Get("user")
+			user := userCtx.(*User)
+			log.Printf("user info: %v", user)
+
+			ctx.JSON(200, gin.H{
+				"message": "pong",
+			})
+			return
+		})
 	}
 
 	r.GET("/ws", func(ctx *gin.Context) {

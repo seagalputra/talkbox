@@ -59,7 +59,7 @@ type (
 		Status    UserStatus         `bson:"status" json:"-"`
 		CreatedAt time.Time          `bson:"createdAt,omitempty" json:"createdAt"`
 		UpdatedAt time.Time          `bson:"updatedAt,omitempty" json:"updatedAt"`
-		DeletedAt time.Time          `bson:"deletedAt,omitempty" json:"deletedAt"`
+		DeletedAt time.Time          `bson:"deletedAt,omitempty" json:"-"`
 	}
 )
 
@@ -106,10 +106,28 @@ func (u *User) IsAvailable() (bool, error) {
 	return true, nil
 }
 
+func FindUserByID(id string) (*User, error) {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.M{
+		"_id": objID,
+	}
+
+	var user User
+	if err := MongoDatabase.Collection(users).FindOne(context.Background(), filter).Decode(&user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func UpdateUserToActive(id string) (*User, error) {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, fmt.Errorf("[FindUserByID] %v", err)
+		return nil, fmt.Errorf("[UpdateUserToActive] %v", err)
 	}
 	filter := bson.M{
 		"_id": objID,
