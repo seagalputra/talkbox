@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently \"next dev\" \"yarn run server\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -13,11 +13,13 @@
     "@types/node": "18.11.9",
     "@types/react": "18.0.25",
     "@types/react-dom": "18.0.9",
+    "axios": "^1.2.0",
     "eslint": "8.28.0",
     "eslint-config-next": "13.0.4",
     "mongoose": "^6.7.2",
     "next": "13.0.4",
     "react": "18.2.0",
+    "react-cookie": "^4.1.1",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.39.5",
     "typescript": "4.9.3"
@@ -27,6 +29,7 @@
     "autoprefixer": "^10.4.13",
     "concurrently": "^7.6.0",
     "postcss": "^8.4.19",
+    "prettier": "^2.8.0",
     "tailwindcss": "^3.2.4"
   }
 }

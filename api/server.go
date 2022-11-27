@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
@@ -46,6 +47,13 @@ func StartServer() error {
 
 	userHandler := UserDefaultHandler()
 	r := gin.Default()
+
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = []string{"http://127.0.0.1:3000", "http://localhost:3000"}
+	corsConfig.AllowCredentials = true
+	r.Use(cors.New(corsConfig))
+	r.Use(ParseAuthCookies())
+
 	api := r.Group("api")
 	v1 := api.Group("v1")
 	{

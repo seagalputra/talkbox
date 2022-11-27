@@ -427,6 +427,10 @@ func (f *UserFunc) LoginHandler(ctx *gin.Context) {
 		return
 	}
 
+	splittedToken := strings.Split(loginOut.AuthToken, ".")
+	ctx.SetCookie("talkbox", strings.Join([]string{splittedToken[0], splittedToken[1]}, "."), 3600, "/", "", true, false)
+	ctx.SetCookie("talkbox_sign", splittedToken[2], 3600, "/", "", true, true)
+
 	ctx.JSON(200, gin.H{
 		"status":  "success",
 		"message": "User authenticated",

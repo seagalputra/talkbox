@@ -9,6 +9,26 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+func ParseAuthCookies() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		signature, err := ctx.Cookie("talkbox_sign")
+		if err != nil {
+			log.Printf("[ParseAuthCookie] %v", err)
+		}
+		tokenInfo, err := ctx.Cookie("talkbox")
+		if err != nil {
+			log.Printf("[ParseAuthCookie] %v", err)
+		}
+
+		authToken := strings.Join([]string{tokenInfo, signature}, ".")
+		if authToken != "" {
+			ctx.Request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authToken))
+		}
+
+		ctx.Next()
+	}
+}
+
 func AuthenticateUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader("Authorization")
