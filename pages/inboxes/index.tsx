@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Inboxes() {
   return (
     <main className="container mx-auto">
@@ -50,118 +52,40 @@ export default function Inboxes() {
           </div>
 
           <ul id="inbox-list" className="flex flex-col mt-2 divide-y">
-            <li className="flex flex-row gap-4 p-4 hover:bg-slate-100 hover:cursor-pointer">
-              <img
-                className="avatar rounded-full w-16"
-                src="https://i.pravatar.cc/300"
-                alt="User avatar"
-              />
-              <div className="flex flex-row justify-between w-full">
-                <div className="flex flex-col gap-2">
-                  <p className="font-bold font-sans text-md text-slate-800 mt-1">
-                    John Doe
-                  </p>
-                  <p className="font-sans text-slate-400 text-sm">
-                    Hello World!
-                  </p>
-                </div>
+            <Link href="/inboxes/9bceabf6ad2a605ea08c2978">
+              <li className="flex flex-row gap-4 p-4 hover:bg-slate-100 hover:cursor-pointer">
+                <img
+                  className="avatar rounded-full w-16"
+                  src="https://i.picsum.photos/id/524/200/200.jpg?hmac=t6LNfKKZ41wUVh8ktcFHag3CGQDzovGpZquMO5cbH-o"
+                  alt="User avatar"
+                />
+                <div className="flex flex-row justify-between w-full">
+                  <div className="flex flex-col gap-2">
+                    <p className="font-bold font-sans text-md text-slate-800 mt-1">
+                      John Doe
+                    </p>
+                    <p className="font-sans text-slate-400 text-sm">
+                      Hello World!
+                    </p>
+                  </div>
 
-                <div className="flex flex-col gap-2">
-                  <p className="text-sm text-slate-400 mt-1">11.00</p>
-                  <p className="text-sm border rounded-full text-center bg-red-500 border-red-500 text-white">
-                    1
-                  </p>
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm text-slate-400 mt-1">11.00</p>
+                    <p className="text-sm border rounded-full text-center bg-red-500 border-red-500 text-white">
+                      1
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </li>
+              </li>
+            </Link>
           </ul>
         </div>
 
         <div
           id="sidebar-right"
-          className="flex-1 overflow-auto max-h-screen bg-gray-50 scrollbar-hide"
+          className="flex-1 overflow-auto max-h-screen bg-gray-50 scrollbar-hide flex justify-center items-center"
         >
-          <div className="flex justify-between items-center sticky top-0 bg-transparent backdrop-blur w-full px-6 py-3 border-b">
-            <div className="flex items-center gap-2">
-              <a
-                href="#"
-                className="hover:bg-slate-100 hover:rounded-full py-2 p-2"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="w-6 h-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </a>
-
-              <p className="font-medium text-lg">John Doe</p>
-            </div>
-
-            <button className="hover:bg-slate-100 hover:rounded-full py-2 p-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
-                />
-              </svg>
-            </button>
-          </div>
-
-          <div className="flex flex-col min-h-screen flex-col-reverse">
-            <div className="flex flex-row items-center gap-4 w-full p-4 bg-white border-t sticky bottom-0">
-              <input
-                type="text"
-                className="w-full rounded-md border-slate-300 bg-white"
-                placeholder="Type your message..."
-              />
-              <button className="bg-indigo-500 rounded-full py-2 px-4 hover:bg-indigo-800">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="w-6 h-6 text-white"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            <ul id="message-list" className="flex flex-col px-4 mb-4">
-              <li>
-                <div className="flex justify-start mb-1">
-                  <p className="bg-slate-200 px-4 py-2 rounded-xl text-black">
-                    Hello World!
-                  </p>
-                </div>
-                <div className="flex justify-start">
-                  <p className="text-slate-500 text-sm">10.50</p>
-                </div>
-              </li>
-            </ul>
-          </div>
+          <p>Select a chat to start messaging</p>
         </div>
       </div>
     </main>
