@@ -13,6 +13,7 @@ export default function Inboxes() {
   const [wsInstance, setWsInstance] = useState<any>(null);
   const { register, handleSubmit, formState, reset } =
     useForm<SendMessageInput>();
+  const [messagesEnd, setMessagesEnd] = useState<any>(null);
 
   useEffect(() => {
     if (router.isReady) {
@@ -37,6 +38,10 @@ export default function Inboxes() {
       reset();
     }
   }, [formState, reset]);
+
+  useEffect(() => {
+    messagesEnd?.scrollIntoView({ behavior: "smooth" });
+  }, [messagesEnd]);
 
   const onSubmitMessage: SubmitHandler<SendMessageInput> = (data) => {
     wsInstance?.send(JSON.stringify(data));
@@ -200,7 +205,13 @@ export default function Inboxes() {
               </button>
             </form>
 
-            <ul id="message-list" className="flex flex-col px-4 mb-4">
+            <ul
+              id="message-list"
+              className="flex flex-col px-4 mb-4"
+              ref={(element) => {
+                setMessagesEnd(element);
+              }}
+            >
               <li>
                 <div className="flex justify-start mb-1">
                   <p className="bg-slate-200 px-4 py-2 rounded-xl text-black">
