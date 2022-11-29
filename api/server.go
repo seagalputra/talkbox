@@ -20,7 +20,7 @@ var wsUpgrader = websocket.Upgrader{
 }
 
 func wsHandler(rw http.ResponseWriter, r *http.Request) {
-	conn, err := wsUpgrader.Upgrade(rw, r, r.Header)
+	conn, err := wsUpgrader.Upgrade(rw, r, nil)
 	if err != nil {
 		log.Printf("wsHandler: %v", err)
 		return
