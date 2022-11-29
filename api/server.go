@@ -3,37 +3,10 @@ package api
 import (
 	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 )
-
-var wsUpgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		// TODO: should check the origin request from client
-		return true
-	},
-}
-
-func wsHandler(rw http.ResponseWriter, r *http.Request) {
-	conn, err := wsUpgrader.Upgrade(rw, r, nil)
-	if err != nil {
-		log.Printf("wsHandler: %v", err)
-		return
-	}
-
-	for {
-		t, msg, err := conn.ReadMessage()
-		if err != nil {
-			break
-		}
-		conn.WriteMessage(t, msg)
-	}
-}
 
 func StartServer() error {
 	if err := LoadAppConfig(); err != nil {
@@ -46,6 +19,7 @@ func StartServer() error {
 	ConnectToRedis()
 
 	userHandler := UserDefaultHandler()
+	messageHandler := MessageDefaultHandler()
 	r := gin.Default()
 
 	corsConfig := cors.DefaultConfig()
@@ -72,9 +46,7 @@ func StartServer() error {
 		})
 	}
 
-	r.GET("/ws", func(ctx *gin.Context) {
-		wsHandler(ctx.Writer, ctx.Request)
-	})
+	r.GET("/rooms/:room_id", AuthenticateUser(), messageHandler.WSHandler)
 
 	port := fmt.Sprintf(":%s", AppConfig.ServerPort)
 	if err := r.Run(port); err != nil {
