@@ -20,6 +20,7 @@ type (
 	}
 
 	SendMessageOutput struct {
+		ID         string    `json:"id"`
 		Body       string    `json:"body"`
 		Attachment *string   `json:"attachment"`
 		From       *User     `json:"from"`
@@ -118,9 +119,7 @@ func (f *MessageFunc) WSHandler(ctx *gin.Context) {
 			log.Printf("[WSHandler] %v", err)
 			continue
 		}
-		log.Printf("%v", input)
 
-		// check if recipient has active connection, if not save the message and send notification
 		room, err := FindRoomByID(roomID)
 		if err != nil {
 			log.Printf("[WSHandler] %v", err)
@@ -136,17 +135,6 @@ func (f *MessageFunc) WSHandler(ctx *gin.Context) {
 				recipientID = participant.ID.Hex()
 			}
 		}
-		log.Printf("recipient: %s", recipientID)
-
-		recipientConn, present := userConnection[recipientID]
-		if present {
-			recipientConn.WriteJSON(SendMessageOutput{
-				Body:       input.Body,
-				Attachment: input.Attachment,
-				From:       user,
-				SentAt:     time.Now(),
-			})
-		}
 
 		message := Message{
 			Body:       input.Body,
@@ -157,5 +145,17 @@ func (f *MessageFunc) WSHandler(ctx *gin.Context) {
 		if err := message.Save(); err != nil {
 			log.Printf("[WSHandler] %v", err)
 		}
+
+		recipientConn, present := userConnection[recipientID]
+		if present {
+			recipientConn.WriteJSON(SendMessageOutput{
+				ID:         message.ID.Hex(),
+				Body:       input.Body,
+				Attachment: input.Attachment,
+				From:       user,
+				SentAt:     time.Now(),
+			})
+		}
+
 	}
 }
