@@ -12,18 +12,18 @@ type (
 	RoomType string
 
 	Participant struct {
-		ID       primitive.ObjectID `bson:"id,omitempty"`
-		Username string             `bson:"username"`
-		Email    string             `bson:"email"`
+		ID       primitive.ObjectID `bson:"id,omitempty" json:"id"`
+		Username string             `bson:"username" json:"username"`
+		Email    string             `bson:"email" json:"email"`
 	}
 
 	Room struct {
-		ID           primitive.ObjectID `bson:"_id,omitempty"`
-		Participants []Participant      `bson:"participants"`
-		RoomType     RoomType           `bson:"roomType"`
-		CreatedAt    *time.Time         `bson:"created_at,omitempty"`
-		UpdatedAt    *time.Time         `bson:"updated_at,omitempty"`
-		DeletedAt    *time.Time         `bson:"deleted_at,omitempty"`
+		ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+		Participants []Participant      `bson:"participants" json:"participants"`
+		RoomType     RoomType           `bson:"roomType" json:"roomType"`
+		CreatedAt    *time.Time         `bson:"createdAt,omitempty" json:"createdAt"`
+		UpdatedAt    *time.Time         `bson:"updatedAt,omitempty" json:"updatedAt"`
+		DeletedAt    *time.Time         `bson:"deletedAt,omitempty" json:"-"`
 	}
 )
 
