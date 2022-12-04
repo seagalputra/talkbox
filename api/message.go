@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -96,13 +98,41 @@ func (m *Message) Save() error {
 	return nil
 }
 
-func FindByRoomID(roomID, cursorID string, limit int64) ([]Message, error) {
+func FindByRoomID(roomID string, cursorObj map[string]interface{}, limit int64) ([]Message, error) {
 	objID, err := primitive.ObjectIDFromHex(roomID)
 	if err != nil {
 		return []Message{}, err
 	}
 
 	pipeline := mongo.Pipeline{
+		bson.D{{"$match", bson.D{{"roomId", bson.D{{"$eq", objID}}}}}},
+		bson.D{{"$sort", bson.D{{"updatedAt", 1}, {"_id", 1}}}},
+	}
+
+	if len(cursorObj) != 0 {
+		id := cursorObj["id"].(string)
+		updatedAt, err := time.Parse(time.RFC3339, cursorObj["updatedAt"].(string))
+		if err != nil {
+			return []Message{}, err
+		}
+
+		msgObjID, err := primitive.ObjectIDFromHex(id)
+		timeObj := primitive.NewDateTimeFromTime(updatedAt)
+		if err != nil {
+			return []Message{}, err
+		}
+
+		pipeline = append(pipeline, bson.D{
+			{"$match",
+				bson.D{
+					{"updatedAt", bson.D{{"$gt", timeObj}}},
+					{"_id", bson.D{{"$gt", msgObjID}}},
+				},
+			},
+		})
+	}
+
+	pipeline = append(pipeline,
 		bson.D{
 			{"$lookup",
 				bson.D{
@@ -125,9 +155,7 @@ func FindByRoomID(roomID, cursorID string, limit int64) ([]Message, error) {
 			},
 		},
 		bson.D{{"$unwind", bson.D{{"path", "$room"}}}},
-		bson.D{{"$match", bson.D{{"roomId", bson.D{{"$eq", objID}}}}}},
-		bson.D{{"$limit", limit}},
-	}
+		bson.D{{"$limit", limit}})
 
 	cursor, err := MongoDatabase.Collection(messages).Aggregate(context.Background(), pipeline)
 	if err != nil {
@@ -150,18 +178,56 @@ func FindByRoomID(roomID, cursorID string, limit int64) ([]Message, error) {
 }
 
 func GetMessages(input GetMessagesInput) GetMessageOutput {
-	messages, err := FindByRoomID(input.RoomID, input.Cursor, input.Limit)
+	cursorInput := make(map[string]interface{})
+	if input.Cursor != "" {
+		d, err := base64.StdEncoding.DecodeString(input.Cursor)
+		if err != nil {
+			log.Printf("[GetMessages] %v", err)
+			return GetMessageOutput{
+				Limit:    input.Limit,
+				Messages: []Message{},
+			}
+		}
+		err = json.Unmarshal(d, &cursorInput)
+		if err != nil {
+			log.Printf("[GetMessages] %v", err)
+			return GetMessageOutput{
+				Limit:    input.Limit,
+				Messages: []Message{},
+			}
+		}
+	}
+
+	messages, err := FindByRoomID(input.RoomID, cursorInput, input.Limit)
 	if err != nil {
 		log.Printf("[GetMessages] %v", err)
 		return GetMessageOutput{
-			Cursor:   "",
 			Limit:    input.Limit,
 			Messages: []Message{},
 		}
 	}
 
+	var cursor string
+	if len(messages) != 0 {
+		lastMessage := messages[len(messages)-1]
+		c := map[string]interface{}{
+			"id":        lastMessage.ID.Hex(),
+			"updatedAt": lastMessage.UpdatedAt,
+		}
+		jsonCursor, err := json.Marshal(c)
+		if err != nil {
+			log.Printf("[GetMessages] %v", err)
+			return GetMessageOutput{
+				Limit:    input.Limit,
+				Messages: []Message{},
+			}
+		}
+
+		cursor = base64.StdEncoding.EncodeToString(jsonCursor)
+	}
+
 	output := GetMessageOutput{
-		Cursor:   "",
+		Cursor:   cursor,
 		Limit:    input.Limit,
 		Messages: messages,
 	}
