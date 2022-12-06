@@ -72,7 +72,7 @@ export default function InboxesLayout({ children }: { children: any }) {
                 <div className="flex flex-row justify-between w-full">
                   <div className="flex flex-col gap-2">
                     <p className="font-bold font-sans text-md text-slate-800 mt-1">
-                      John Doe
+                      Alex Roger
                     </p>
                     <p className="font-sans text-slate-400 text-sm">
                       Hello World!

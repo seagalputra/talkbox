@@ -63,8 +63,8 @@ type (
 		CreatedAt  time.Time          `bson:"createdAt,omitempty" json:"createdAt"`
 		UpdatedAt  time.Time          `bson:"updatedAt,omitempty" json:"updatedAt"`
 		DeletedAt  time.Time          `bson:"deletedAt,omitempty" json:"-"`
-		User       User               `bson:"user,omitempty" json:"user"`
-		Room       Room               `bson:"room,omitempty" json:"room"`
+		User       *User              `bson:"user,omitempty" json:"user"`
+		Room       *Room              `bson:"room,omitempty" json:"room"`
 	}
 
 	MessageFunc struct {

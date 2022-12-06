@@ -5,18 +5,52 @@ import { useEffect, useState } from "react";
 import type { NextPageWithLayout } from "../_app";
 import type { ReactElement } from "react";
 import InboxesLayout from "./_layout";
+import { GetServerSideProps } from "next";
+import http from "../../lib/http";
+import useCurrentUser from "../../hook/useCurrentUser";
 
 type SendMessageInput = {
   body: string;
   attachment?: string;
 };
 
-const Inboxes: NextPageWithLayout = () => {
+export const getServerSideProps: GetServerSideProps<any> = async ({
+  params,
+  req,
+}) => {
+  const { roomId } = params || {};
+  try {
+    const response = await http.get(`/rooms/${roomId}/messages`, {
+      params: {
+        limit: 20,
+      },
+      headers: {
+        Cookie: req.headers.cookie,
+      },
+      withCredentials: true,
+    });
+
+    return {
+      props: {
+        messages: response.data?.data,
+      },
+    };
+  } catch (e) {
+    console.error(e);
+
+    return {
+      props: {},
+    };
+  }
+};
+
+const Inboxes: NextPageWithLayout<any> = ({ messages }) => {
   const router = useRouter();
   const [wsInstance, setWsInstance] = useState<any>(null);
   const { register, handleSubmit, formState, reset } =
     useForm<SendMessageInput>();
   const [messagesEnd, setMessagesEnd] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useCurrentUser();
 
   useEffect(() => {
     if (router.isReady) {
@@ -74,7 +108,7 @@ const Inboxes: NextPageWithLayout = () => {
             </svg>
           </Link>
 
-          <p className="font-medium text-lg">John Doe</p>
+          <p className="font-medium text-lg">Alex Roger</p>
         </div>
 
         <button className="hover:bg-slate-100 hover:rounded-full py-2 p-2">
@@ -130,21 +164,40 @@ const Inboxes: NextPageWithLayout = () => {
 
         <ul
           id="message-list"
-          className="flex flex-col px-4 mb-4"
+          className="flex flex-col px-4 mb-4 gap-3"
           ref={(element) => {
             setMessagesEnd(element);
           }}
         >
-          <li>
-            <div className="flex justify-start mb-1">
-              <p className="bg-slate-200 px-4 py-2 rounded-xl text-black">
-                Hello World!
-              </p>
-            </div>
-            <div className="flex justify-start">
-              <p className="text-slate-500 text-sm">10.50</p>
-            </div>
-          </li>
+          {messages.map(({ id, body, userId, createdAt }: any) => {
+            const timestamp = new Date(createdAt).toLocaleTimeString("en-us", {
+              timeStyle: "short",
+            });
+
+            return currentUser?.id === userId ? (
+              <li key={id}>
+                <div className="flex justify-end mb-1">
+                  <p className="bg-indigo-500 px-4 py-2 rounded-xl text-white">
+                    {body}
+                  </p>
+                </div>
+                <div className="flex justify-end">
+                  <p className="text-slate-500 text-sm">{timestamp}</p>
+                </div>
+              </li>
+            ) : (
+              <li key={id}>
+                <div className="flex justify-start mb-1">
+                  <p className="bg-slate-200 px-4 py-2 rounded-xl text-black">
+                    {body}
+                  </p>
+                </div>
+                <div className="flex justify-start">
+                  <p className="text-slate-500 text-sm">{timestamp}</p>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </>
