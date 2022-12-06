@@ -14,43 +14,15 @@ type SendMessageInput = {
   attachment?: string;
 };
 
-export const getServerSideProps: GetServerSideProps<any> = async ({
-  params,
-  req,
-}) => {
-  const { roomId } = params || {};
-  try {
-    const response = await http.get(`/rooms/${roomId}/messages`, {
-      params: {
-        limit: 20,
-      },
-      headers: {
-        Cookie: req.headers.cookie,
-      },
-      withCredentials: true,
-    });
-
-    return {
-      props: {
-        messages: response.data?.data,
-      },
-    };
-  } catch (e) {
-    console.error(e);
-
-    return {
-      props: {},
-    };
-  }
-};
-
-const Inboxes: NextPageWithLayout<any> = ({ messages }) => {
+const Inboxes: NextPageWithLayout<any> = () => {
   const router = useRouter();
   const [wsInstance, setWsInstance] = useState<any>(null);
   const { register, handleSubmit, formState, reset } =
     useForm<SendMessageInput>();
   const [messagesEnd, setMessagesEnd] = useState<any>(null);
   const [currentUser, setCurrentUser] = useCurrentUser();
+  const [messages, setMessages] = useState<any>([]);
+  const [isFetchingMessage, setIsFetchingMessage] = useState<boolean>(false);
 
   useEffect(() => {
     if (router.isReady) {
@@ -80,8 +52,40 @@ const Inboxes: NextPageWithLayout<any> = ({ messages }) => {
     messagesEnd?.scrollIntoView({ behavior: "smooth" });
   }, [messagesEnd]);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        if (router.isReady) {
+          const { roomId } = router.query;
+          const response = await http.get(`/rooms/${roomId}/messages`, {
+            params: {
+              limit: 20,
+            },
+            withCredentials: true,
+          });
+
+          setMessages(response.data?.data);
+        }
+      } catch (e) {
+        // TODO: handle failed when fetching data
+        console.error(e);
+      }
+
+      setIsFetchingMessage(false);
+    })();
+  }, [isFetchingMessage, router.isReady, router.query]);
+
+  useEffect(() => {
+    if (wsInstance) {
+      wsInstance.onmessage = () => {
+        setIsFetchingMessage(true);
+      };
+    }
+  }, [wsInstance]);
+
   const onSubmitMessage: SubmitHandler<SendMessageInput> = (data) => {
     wsInstance?.send(JSON.stringify(data));
+    setIsFetchingMessage(true);
   };
 
   return (
