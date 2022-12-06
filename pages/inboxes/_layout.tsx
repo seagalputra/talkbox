@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 export default function InboxesLayout({ children }: { children: any }) {
+  const router = useRouter();
+
   return (
     <main className="container mx-auto">
       <div className="flex w-full bg-white min-h-screen divide-x border-x">
@@ -53,7 +56,14 @@ export default function InboxesLayout({ children }: { children: any }) {
 
           <ul id="inbox-list" className="flex flex-col mt-2 divide-y">
             <Link href="/inboxes/9bceabf6ad2a605ea08c2978">
-              <li className="flex flex-row gap-4 p-4 hover:bg-slate-100 hover:cursor-pointer">
+              <li
+                className={`flex flex-row gap-4 p-4 hover:bg-slate-100 hover:cursor-pointer ${
+                  router.isReady &&
+                  router?.query?.roomId === "9bceabf6ad2a605ea08c2978"
+                    ? "bg-slate-100"
+                    : ""
+                }`}
+              >
                 <img
                   className="avatar rounded-full w-16"
                   src="https://i.picsum.photos/id/524/200/200.jpg?hmac=t6LNfKKZ41wUVh8ktcFHag3CGQDzovGpZquMO5cbH-o"
