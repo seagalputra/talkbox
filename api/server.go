@@ -20,6 +20,7 @@ func StartServer() error {
 
 	userHandler := UserDefaultHandler()
 	messageHandler := MessageDefaultHandler()
+	roomHandler := RoomDefaultHandler()
 	r := gin.Default()
 
 	corsConfig := cors.DefaultConfig()
@@ -34,6 +35,7 @@ func StartServer() error {
 		v1.POST("/auth/register", userHandler.RegisterUserHandler)
 		v1.POST("/auth/login", userHandler.LoginHandler)
 		v1.GET("/users/confirm_account", userHandler.ConfirmUserAccountHandler)
+		v1.GET("/rooms", AuthenticateUser(), roomHandler.GetRoomsHandler)
 		v1.GET("/rooms/:room_id/messages", AuthenticateUser(), messageHandler.GetMessagesHandler)
 	}
 
