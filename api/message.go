@@ -27,8 +27,12 @@ type (
 		ID         string    `json:"id"`
 		Body       string    `json:"body"`
 		Attachment *string   `json:"attachment"`
-		From       *User     `json:"from"`
-		SentAt     time.Time `json:"sentAt"`
+		UserID     string    `json:"userId"`
+		RoomID     string    `json:"roomId"`
+		User       *User     `json:"user"`
+		Room       *Room     `json:"room"`
+		CreatedAt  time.Time `json:"createdAt"`
+		UpdatedAt  time.Time `json:"updatedAt"`
 	}
 
 	GetMessagesInput struct {
@@ -321,8 +325,12 @@ func (f *MessageFunc) WSHandler(ctx *gin.Context) {
 				ID:         message.ID.Hex(),
 				Body:       input.Body,
 				Attachment: input.Attachment,
-				From:       user,
-				SentAt:     time.Now(),
+				UserID:     user.ID.Hex(),
+				RoomID:     room.ID.Hex(),
+				User:       user,
+				Room:       room,
+				CreatedAt:  message.CreatedAt,
+				UpdatedAt:  message.UpdatedAt,
 			})
 		}
 	}

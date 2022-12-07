@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { NextPageWithLayout } from "../_app";
 import type { ReactElement } from "react";
 import InboxesLayout from "./_layout";
-import { GetServerSideProps } from "next";
 import http from "../../lib/http";
 import useCurrentUser from "../../hook/useCurrentUser";
 
@@ -19,10 +18,10 @@ const Inboxes: NextPageWithLayout<any> = () => {
   const [wsInstance, setWsInstance] = useState<any>(null);
   const { register, handleSubmit, formState, reset } =
     useForm<SendMessageInput>();
-  const [messagesEnd, setMessagesEnd] = useState<any>(null);
   const [currentUser, setCurrentUser] = useCurrentUser();
   const [messages, setMessages] = useState<any>([]);
   const [isFetchingMessage, setIsFetchingMessage] = useState<boolean>(false);
+  const messageBoxRef = useRef<any>();
 
   useEffect(() => {
     if (router.isReady) {
@@ -49,8 +48,8 @@ const Inboxes: NextPageWithLayout<any> = () => {
   }, [formState, reset]);
 
   useEffect(() => {
-    messagesEnd?.scrollIntoView({ behavior: "smooth" });
-  }, [messagesEnd]);
+    messageBoxRef?.current.scrollIntoView({ behavior: "smooth" });
+  });
 
   useEffect(() => {
     (async () => {
@@ -77,8 +76,9 @@ const Inboxes: NextPageWithLayout<any> = () => {
 
   useEffect(() => {
     if (wsInstance) {
-      wsInstance.onmessage = () => {
-        setIsFetchingMessage(true);
+      wsInstance.onmessage = (event: MessageEvent) => {
+        const response = JSON.parse(event.data);
+        setMessages((prevMessages: any) => [...prevMessages, response]);
       };
     }
   }, [wsInstance]);
@@ -167,11 +167,9 @@ const Inboxes: NextPageWithLayout<any> = () => {
         </form>
 
         <ul
+          ref={messageBoxRef}
           id="message-list"
-          className="flex flex-col px-4 mb-4 gap-3"
-          ref={(element) => {
-            setMessagesEnd(element);
-          }}
+          className="flex flex-col px-4 my-4 gap-3"
         >
           {messages.map(({ id, body, userId, createdAt }: any) => {
             const timestamp = new Date(createdAt).toLocaleTimeString("en-us", {
