@@ -18,6 +18,7 @@ type (
 	GetRoomsInput struct {
 		Cursor string
 		Limit  int64
+		User   *User
 	}
 
 	GetRoomsOutput struct {
@@ -75,10 +76,16 @@ func FindRoomByID(id string) (*Room, error) {
 	return &room, nil
 }
 
-func FindRooms(cursorObj map[string]interface{}, limit int64) ([]Room, error) {
-
+func FindRoomsByUserID(userID *primitive.ObjectID, cursorObj map[string]interface{}, limit int64) ([]Room, error) {
 	pipeline := mongo.Pipeline{
 		bson.D{{"$sort", bson.D{{"updatedAt", -1}, {"_id", -1}}}},
+	}
+
+	if userID != nil {
+		// it prepend to the pipline array
+		pipeline = append(mongo.Pipeline{
+			bson.D{{"$match", bson.D{{"participants", bson.D{{"$elemMatch", bson.D{{"id", userID}}}}}}}},
+		}, pipeline...)
 	}
 
 	if len(cursorObj) != 0 {
@@ -159,7 +166,12 @@ func GetRooms(input GetRoomsInput) GetRoomsOutput {
 		}
 	}
 
-	rooms, err := FindRooms(cursorInput, input.Limit)
+	var userID *primitive.ObjectID
+	if input.User != nil {
+		userID = &input.User.ID
+	}
+
+	rooms, err := FindRoomsByUserID(userID, cursorInput, input.Limit)
 	if err != nil {
 		log.Printf("[GetRooms] %v", err)
 		return GetRoomsOutput{
@@ -200,6 +212,16 @@ func (f *RoomFunc) GetRoomsHandler(ctx *gin.Context) {
 	cursor := ctx.Query("cursor")
 	limitQuery := ctx.Query("limit")
 
+	userCtx, ok := ctx.Get("user")
+	if !ok {
+		log.Println("[GetRoomsHandler] Unable to get current user")
+		ctx.JSON(422, gin.H{
+			"status":   "error",
+			"messages": "Failed to get rooms",
+		})
+	}
+	user := userCtx.(*User)
+
 	limit := 10
 	if limitQuery != "" {
 		var err error
@@ -216,6 +238,7 @@ func (f *RoomFunc) GetRoomsHandler(ctx *gin.Context) {
 	input := GetRoomsInput{
 		Cursor: cursor,
 		Limit:  int64(limit),
+		User:   user,
 	}
 	output := f.GetRoomsFunc(input)
 
