@@ -1,8 +1,28 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
+import React, { useEffect, useState } from "react";
+import http from "../../lib/http";
+import useCurrentUser from "../../hook/useCurrentUser";
 
 export default function InboxesLayout({ children }: { children: any }) {
   const router = useRouter();
+  const [rooms, setRooms] = useState<any>([]);
+  const [currentUser, setCurrentUser] = useCurrentUser();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const response = await http.get("/rooms", {
+          withCredentials: true,
+        });
+
+        setRooms(response.data?.data);
+      } catch (e) {
+        // TODO: handle failed when fetching data
+        console.error(e);
+      }
+    })();
+  }, []);
 
   return (
     <main className="container mx-auto">
@@ -55,39 +75,54 @@ export default function InboxesLayout({ children }: { children: any }) {
           </div>
 
           <ul id="inbox-list" className="flex flex-col mt-2 divide-y">
-            <Link href="/inboxes/9bceabf6ad2a605ea08c2978">
-              <li
-                className={`flex flex-row gap-4 p-4 hover:bg-slate-100 hover:cursor-pointer ${
-                  router.isReady &&
-                  router?.query?.roomId === "9bceabf6ad2a605ea08c2978"
-                    ? "bg-slate-100"
-                    : ""
-                }`}
-              >
-                <img
-                  className="avatar rounded-full w-16"
-                  src="https://i.picsum.photos/id/524/200/200.jpg?hmac=t6LNfKKZ41wUVh8ktcFHag3CGQDzovGpZquMO5cbH-o"
-                  alt="User avatar"
-                />
-                <div className="flex flex-row justify-between w-full">
-                  <div className="flex flex-col gap-2">
-                    <p className="font-bold font-sans text-md text-slate-800 mt-1">
-                      Alex Roger
-                    </p>
-                    <p className="font-sans text-slate-400 text-sm">
-                      Hello World!
-                    </p>
-                  </div>
+            {rooms.map(({ participants, id, lastMessage, updatedAt }: any) => {
+              const timestamp = new Date(updatedAt).toLocaleTimeString(
+                "en-us",
+                {
+                  timeStyle: "short",
+                }
+              );
+              const friends = participants?.filter(
+                (participant: any) => participant?.id !== currentUser?.id
+              );
 
-                  <div className="flex flex-col gap-2">
-                    <p className="text-sm text-slate-400 mt-1">11.00</p>
-                    <p className="text-sm border rounded-full text-center bg-red-500 border-red-500 text-white">
-                      1
-                    </p>
-                  </div>
-                </div>
-              </li>
-            </Link>
+              return (
+                <Link key={id} href={`/inboxes/${id}`}>
+                  <li
+                    className={`flex flex-row gap-4 p-4 hover:bg-slate-100 hover:cursor-pointer ${
+                      router.isReady && router?.query?.roomId === id
+                        ? "bg-slate-100"
+                        : ""
+                    }`}
+                  >
+                    <img
+                      className="avatar rounded-full w-16"
+                      src="https://i.picsum.photos/id/524/200/200.jpg?hmac=t6LNfKKZ41wUVh8ktcFHag3CGQDzovGpZquMO5cbH-o"
+                      alt="User avatar"
+                    />
+                    <div className="flex flex-row justify-between w-full">
+                      <div className="flex flex-col gap-2">
+                        <p className="font-bold font-sans text-md text-slate-800 mt-1">
+                          {friends[0]?.username}
+                        </p>
+                        <p className="font-sans text-slate-400 text-sm">
+                          {lastMessage}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <p className="text-sm text-slate-400 mt-1">
+                          {timestamp}
+                        </p>
+                        <p className="hidden w-1/2 text-sm border rounded-full text-center bg-red-500 border-red-500 text-white">
+                          1
+                        </p>
+                      </div>
+                    </div>
+                  </li>
+                </Link>
+              );
+            })}
           </ul>
         </div>
 
@@ -95,7 +130,16 @@ export default function InboxesLayout({ children }: { children: any }) {
           id="sidebar-right"
           className="flex-1 overflow-auto max-h-screen bg-gray-50 scrollbar-hide"
         >
-          {children}
+          {React.Children.map(children, (element) => {
+            let room;
+            if (router?.isReady && router?.query?.roomId) {
+              room = rooms?.find(({ id }: any) => id === router?.query?.roomId);
+            }
+            const props = {
+              room,
+            };
+            return React.cloneElement(element, props);
+          })}
         </div>
       </div>
     </main>

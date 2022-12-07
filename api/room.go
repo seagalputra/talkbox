@@ -30,10 +30,12 @@ type (
 	RoomType string
 
 	Participant struct {
-		ID       primitive.ObjectID `bson:"id,omitempty" json:"id"`
-		Username string             `bson:"username" json:"username"`
-		Email    string             `bson:"email" json:"email"`
-		Avatar   string             `bson:"avatar" json:"avatar"`
+		ID        primitive.ObjectID `bson:"id,omitempty" json:"id"`
+		FirstName string             `bson:"firstName" json:"firstName"`
+		LastName  string             `bson:"lastName" json:"lastName"`
+		Username  string             `bson:"username" json:"username"`
+		Email     string             `bson:"email" json:"email"`
+		Avatar    string             `bson:"avatar" json:"avatar"`
 	}
 
 	Room struct {
