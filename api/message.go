@@ -102,7 +102,7 @@ func (m *Message) Save() error {
 	return nil
 }
 
-func FindByRoomID(roomID string, cursorObj map[string]interface{}, limit int64) ([]Message, error) {
+func FindMessageByRoomID(roomID string, cursorObj map[string]interface{}, limit int64) ([]Message, error) {
 	objID, err := primitive.ObjectIDFromHex(roomID)
 	if err != nil {
 		return []Message{}, err
@@ -110,18 +110,18 @@ func FindByRoomID(roomID string, cursorObj map[string]interface{}, limit int64) 
 
 	pipeline := mongo.Pipeline{
 		bson.D{{"$match", bson.D{{"roomId", bson.D{{"$eq", objID}}}}}},
-		bson.D{{"$sort", bson.D{{"updatedAt", 1}, {"_id", 1}}}},
+		bson.D{{"$sort", bson.D{{"createdAt", -1}, {"_id", -1}}}},
 	}
 
 	if len(cursorObj) != 0 {
 		id := cursorObj["id"].(string)
-		updatedAt, err := time.Parse(time.RFC3339, cursorObj["updatedAt"].(string))
+		createdAt, err := time.Parse(time.RFC3339, cursorObj["createdAt"].(string))
 		if err != nil {
 			return []Message{}, err
 		}
 
 		msgObjID, err := primitive.ObjectIDFromHex(id)
-		timeObj := primitive.NewDateTimeFromTime(updatedAt)
+		timeObj := primitive.NewDateTimeFromTime(createdAt)
 		if err != nil {
 			return []Message{}, err
 		}
@@ -129,7 +129,7 @@ func FindByRoomID(roomID string, cursorObj map[string]interface{}, limit int64) 
 		pipeline = append(pipeline, bson.D{
 			{"$match",
 				bson.D{
-					{"updatedAt", bson.D{{"$gt", timeObj}}},
+					{"createdAt", bson.D{{"$gt", timeObj}}},
 					{"_id", bson.D{{"$gt", msgObjID}}},
 				},
 			},
@@ -202,7 +202,7 @@ func GetMessages(input GetMessagesInput) GetMessageOutput {
 		}
 	}
 
-	messages, err := FindByRoomID(input.RoomID, cursorInput, input.Limit)
+	messages, err := FindMessageByRoomID(input.RoomID, cursorInput, input.Limit)
 	if err != nil {
 		log.Printf("[GetMessages] %v", err)
 		return GetMessageOutput{
@@ -216,7 +216,7 @@ func GetMessages(input GetMessagesInput) GetMessageOutput {
 		lastMessage := messages[len(messages)-1]
 		c := map[string]interface{}{
 			"id":        lastMessage.ID.Hex(),
-			"updatedAt": lastMessage.UpdatedAt,
+			"createdAt": lastMessage.CreatedAt,
 		}
 		jsonCursor, err := json.Marshal(c)
 		if err != nil {

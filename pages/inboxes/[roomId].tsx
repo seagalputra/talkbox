@@ -48,7 +48,7 @@ const Inboxes: NextPageWithLayout<any> = () => {
   }, [formState, reset]);
 
   useEffect(() => {
-    messageBoxRef?.current.scrollIntoView({ behavior: "smooth" });
+    messageBoxRef?.current.scrollIntoView();
   });
 
   useEffect(() => {
@@ -78,7 +78,7 @@ const Inboxes: NextPageWithLayout<any> = () => {
     if (wsInstance) {
       wsInstance.onmessage = (event: MessageEvent) => {
         const response = JSON.parse(event.data);
-        setMessages((prevMessages: any) => [...prevMessages, response]);
+        setMessages((prevMessages: any) => [response, ...prevMessages]);
       };
     }
   }, [wsInstance]);
@@ -145,6 +145,22 @@ const Inboxes: NextPageWithLayout<any> = () => {
             className="w-full rounded-md border-slate-300 bg-white"
             placeholder="Type your message..."
           />
+          <button id="attachment" className="text-gray-500">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              className="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"
+              />
+            </svg>
+          </button>
           <button
             type="submit"
             className="bg-indigo-500 rounded-full py-2 px-4 hover:bg-indigo-800"
@@ -169,7 +185,7 @@ const Inboxes: NextPageWithLayout<any> = () => {
         <ul
           ref={messageBoxRef}
           id="message-list"
-          className="flex flex-col px-4 my-4 gap-3"
+          className="flex flex-col-reverse px-4 my-4 gap-3"
         >
           {messages.map(({ id, body, userId, createdAt }: any) => {
             const timestamp = new Date(createdAt).toLocaleTimeString("en-us", {
