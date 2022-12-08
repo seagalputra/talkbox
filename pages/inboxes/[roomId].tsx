@@ -20,7 +20,6 @@ const Inboxes: NextPageWithLayout<any> = () => {
     useForm<SendMessageInput>();
   const [currentUser, setCurrentUser] = useCurrentUser();
   const [messages, setMessages] = useState<any>([]);
-  const [isFetchingMessage, setIsFetchingMessage] = useState<boolean>(false);
   const messageBoxRef = useRef<any>();
   const { getCurrentRoom } = useContext(RoomContext);
 
@@ -70,10 +69,8 @@ const Inboxes: NextPageWithLayout<any> = () => {
         // TODO: handle failed when fetching data
         console.error(e);
       }
-
-      setIsFetchingMessage(false);
     })();
-  }, [isFetchingMessage, router.isReady, router.query]);
+  }, [router.isReady, router.query]);
 
   useEffect(() => {
     if (wsInstance) {
@@ -86,7 +83,6 @@ const Inboxes: NextPageWithLayout<any> = () => {
 
   const onSubmitMessage: SubmitHandler<SendMessageInput> = (data) => {
     wsInstance?.send(JSON.stringify(data));
-    setIsFetchingMessage(true);
   };
 
   const getFriendName = (): string => {

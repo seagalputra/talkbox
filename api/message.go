@@ -319,9 +319,24 @@ func (f *MessageFunc) WSHandler(ctx *gin.Context) {
 			log.Printf("[WSHandler] %v", err)
 		}
 
-		recipientConn, present := userConnection[recipientID]
-		if present {
+		recipientConn, recipientPresent := userConnection[recipientID]
+		if recipientPresent {
 			recipientConn.WriteJSON(SendMessageOutput{
+				ID:         message.ID.Hex(),
+				Body:       input.Body,
+				Attachment: input.Attachment,
+				UserID:     user.ID.Hex(),
+				RoomID:     room.ID.Hex(),
+				User:       user,
+				Room:       room,
+				CreatedAt:  message.CreatedAt,
+				UpdatedAt:  message.UpdatedAt,
+			})
+		}
+
+		senderConn, senderPresent := userConnection[userID]
+		if senderPresent {
+			senderConn.WriteJSON(SendMessageOutput{
 				ID:         message.ID.Hex(),
 				Body:       input.Body,
 				Attachment: input.Attachment,
