@@ -21,7 +21,7 @@ const Inboxes: NextPageWithLayout<any> = () => {
   const [currentUser, setCurrentUser] = useCurrentUser();
   const [messages, setMessages] = useState<any>([]);
   const messageBoxRef = useRef<any>();
-  const { getCurrentRoom } = useContext(RoomContext);
+  const { getCurrentRoom, setIsFetchingRooms } = useContext(RoomContext);
 
   useEffect(() => {
     if (router.isReady) {
@@ -83,6 +83,7 @@ const Inboxes: NextPageWithLayout<any> = () => {
 
   const onSubmitMessage: SubmitHandler<SendMessageInput> = (data) => {
     wsInstance?.send(JSON.stringify(data));
+    setIsFetchingRooms(true);
   };
 
   const getFriendName = (): string => {

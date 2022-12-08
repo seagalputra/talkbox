@@ -60,6 +60,48 @@ const (
 	rooms string = "rooms"
 )
 
+func (r *Room) Save() error {
+	now := time.Now()
+	if r.CreatedAt == nil {
+		r.CreatedAt = &now
+	}
+	r.UpdatedAt = &now
+
+	var err error
+	room, _ := FindRoomByID(r.ID.Hex())
+	if room != nil {
+		filter := bson.M{
+			"_id": room.ID,
+		}
+		_, err = MongoDatabase.Collection(rooms).UpdateOne(context.Background(), filter, bson.M{"$set": r})
+		if err != nil {
+			return err
+		}
+	} else {
+		var res *mongo.InsertOneResult
+		res, err = MongoDatabase.Collection(rooms).InsertOne(context.Background(), r)
+		if err != nil {
+			return err
+		}
+		r.ID = res.InsertedID.(primitive.ObjectID)
+	}
+	return nil
+}
+
+func SaveLastMessageInRoom(id, lastMessage string) error {
+	room, err := FindRoomByID(id)
+	if err != nil {
+		return err
+	}
+
+	room.LastMessage = lastMessage
+	if err := room.Save(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func FindRoomByID(id string) (*Room, error) {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {

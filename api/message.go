@@ -99,6 +99,10 @@ func (m *Message) Save() error {
 		return err
 	}
 	m.ID = res.InsertedID.(primitive.ObjectID)
+
+	if err := SaveLastMessageInRoom(m.RoomID.Hex(), m.Body); err != nil {
+		return err
+	}
 	return nil
 }
 

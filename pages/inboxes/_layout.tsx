@@ -16,6 +16,7 @@ export default function InboxesLayout({ children }: { children: any }) {
   const router = useRouter();
   const [rooms, setRooms] = useState<any>([]);
   const [currentUser, setCurrentUser] = useCurrentUser();
+  const [isFetchingRooms, setIsFetchingRooms] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -29,8 +30,10 @@ export default function InboxesLayout({ children }: { children: any }) {
         // TODO: handle failed when fetching data
         console.error(e);
       }
+
+      setIsFetchingRooms(false);
     })();
-  }, []);
+  }, [isFetchingRooms]);
 
   const getCurrentRoom = useCallback(() => {
     if (router.isReady && router.query?.roomId) {
@@ -43,8 +46,9 @@ export default function InboxesLayout({ children }: { children: any }) {
     () => ({
       rooms,
       getCurrentRoom,
+      setIsFetchingRooms,
     }),
-    [rooms, getCurrentRoom]
+    [rooms, getCurrentRoom, setIsFetchingRooms]
   );
 
   return (
