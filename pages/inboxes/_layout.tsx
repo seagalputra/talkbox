@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import http from "../../lib/http";
 import useCurrentUser from "../../hook/useCurrentUser";
+import UserProfileModal from "../../components/UserProfileModal";
 
 export const RoomContext = createContext<any>({});
 
@@ -17,6 +18,8 @@ export default function InboxesLayout({ children }: { children: any }) {
   const [rooms, setRooms] = useState<any>([]);
   const [currentUser, setCurrentUser] = useCurrentUser();
   const [isFetchingRooms, setIsFetchingRooms] = useState<boolean>(false);
+  const [isUserProfileModalOpen, setIsUserProfileModalOpen] =
+    useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -51,6 +54,9 @@ export default function InboxesLayout({ children }: { children: any }) {
     [rooms, getCurrentRoom, setIsFetchingRooms]
   );
 
+  const openUserProfileModal = () =>
+    setIsUserProfileModalOpen((prevValue) => !prevValue);
+
   return (
     <RoomContext.Provider value={roomContextValue}>
       <main className="container mx-auto">
@@ -78,7 +84,10 @@ export default function InboxesLayout({ children }: { children: any }) {
                     />
                   </svg>
                 </button>
-                <button className="hover:bg-slate-100 hover:rounded-full py-2 p-2">
+                <button
+                  onClick={openUserProfileModal}
+                  className="hover:bg-slate-100 hover:rounded-full py-2 p-2"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -163,6 +172,10 @@ export default function InboxesLayout({ children }: { children: any }) {
             {children}
           </div>
         </div>
+
+        {isUserProfileModalOpen ? (
+          <UserProfileModal openUserProfileModal={openUserProfileModal} />
+        ) : null}
       </main>
     </RoomContext.Provider>
   );
