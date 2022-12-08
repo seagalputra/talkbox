@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useContext } from "react";
 import type { NextPageWithLayout } from "../_app";
 import type { ReactElement } from "react";
-import InboxesLayout from "./_layout";
+import InboxesLayout, { RoomContext } from "./_layout";
 import http from "../../lib/http";
 import useCurrentUser from "../../hook/useCurrentUser";
 
@@ -13,7 +13,7 @@ type SendMessageInput = {
   attachment?: string;
 };
 
-const Inboxes: NextPageWithLayout<any> = ({ room }) => {
+const Inboxes: NextPageWithLayout<any> = () => {
   const router = useRouter();
   const [wsInstance, setWsInstance] = useState<any>(null);
   const { register, handleSubmit, formState, reset } =
@@ -22,6 +22,7 @@ const Inboxes: NextPageWithLayout<any> = ({ room }) => {
   const [messages, setMessages] = useState<any>([]);
   const [isFetchingMessage, setIsFetchingMessage] = useState<boolean>(false);
   const messageBoxRef = useRef<any>();
+  const { getCurrentRoom } = useContext(RoomContext);
 
   useEffect(() => {
     if (router.isReady) {
@@ -88,6 +89,16 @@ const Inboxes: NextPageWithLayout<any> = ({ room }) => {
     setIsFetchingMessage(true);
   };
 
+  const getFriendName = (): string => {
+    const currentRoom = getCurrentRoom();
+
+    const friend = currentRoom?.participants?.find(
+      (participant: any) => participant.id !== currentUser?.id
+    );
+
+    return friend?.username;
+  };
+
   return (
     <>
       <div className="flex justify-between items-center sticky top-0 bg-transparent backdrop-blur w-full px-6 py-3 border-b">
@@ -112,7 +123,7 @@ const Inboxes: NextPageWithLayout<any> = ({ room }) => {
             </svg>
           </Link>
 
-          <p className="font-medium text-lg">Alex Roger</p>
+          <p className="font-medium text-lg">{getFriendName()}</p>
         </div>
 
         <button className="hover:bg-slate-100 hover:rounded-full py-2 p-2">
