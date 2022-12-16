@@ -1,6 +1,7 @@
 import { AxiosError } from "axios";
 import { useState, useEffect } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
+import Image from "next/image";
 import http from "../lib/http";
 
 type UpdateUserInput = {
@@ -88,10 +89,12 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
         </div>
 
         <div className="mt-4 relative flex justify-center">
-          <img
+          <Image
+            src={userProfile?.avatar || ""}
             className="rounded-full w-24"
-            src="https://i.picsum.photos/id/524/200/200.jpg?hmac=t6LNfKKZ41wUVh8ktcFHag3CGQDzovGpZquMO5cbH-o"
             alt="User avatar"
+            width={200}
+            height={200}
           />
 
           <div className="rounded-full w-24 absolute top-0 w-full h-full flex items-center justify-center text-transparent hover:bg-black/[0.4] hover:text-white transition duration-200">

@@ -7,6 +7,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import Image from "next/image";
 import http from "../../lib/http";
 import useCurrentUser from "../../hook/useCurrentUser";
 import UserProfileModal from "../../components/UserProfileModal";
@@ -133,9 +134,11 @@ export default function InboxesLayout({ children }: { children: any }) {
                             : ""
                         }`}
                       >
-                        <img
-                          className="avatar rounded-full w-16"
-                          src="https://i.picsum.photos/id/524/200/200.jpg?hmac=t6LNfKKZ41wUVh8ktcFHag3CGQDzovGpZquMO5cbH-o"
+                        <Image
+                          src={friends[0]?.avatar}
+                          width={200}
+                          height={200}
+                          className="rounded-full w-16"
                           alt="User avatar"
                         />
                         <div className="flex flex-row justify-between w-full">
