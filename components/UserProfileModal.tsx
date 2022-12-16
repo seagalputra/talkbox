@@ -24,7 +24,7 @@ type UpdateProfileOutput = {
 };
 
 const UserProfileModal = ({ openUserProfileModal }: any) => {
-  const [errorResponse, setErrorResponse] = useState<UpdateProfileOutput>({});
+  const [errorResponse, setErrorResponse] = useState<UpdateProfileOutput>();
   const [userProfile, setUserProfile] = useState<UserProfile>({});
   const { register, handleSubmit, setValue } = useForm<UpdateUserInput>();
 
@@ -87,6 +87,12 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
             </svg>
           </button>
         </div>
+
+        {errorResponse ? (
+          <div className="flex bg-rose-400 text-white mt-4 p-4 rounded">
+            <p>{errorResponse?.message}</p>
+          </div>
+        ) : null}
 
         <div className="mt-4 relative flex justify-center">
           <Image
