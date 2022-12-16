@@ -35,6 +35,8 @@ func StartServer() error {
 		v1.POST("/auth/register", userHandler.RegisterUserHandler)
 		v1.POST("/auth/login", userHandler.LoginHandler)
 		v1.GET("/users/confirm_account", userHandler.ConfirmUserAccountHandler)
+		v1.GET("/users/profile", AuthenticateUser(), userHandler.GetProfileHandler)
+		v1.PATCH("/users", AuthenticateUser(), userHandler.UpdateProfileHandler)
 		v1.GET("/rooms", AuthenticateUser(), roomHandler.GetRoomsHandler)
 		v1.GET("/rooms/:room_id/messages", AuthenticateUser(), messageHandler.GetMessagesHandler)
 	}

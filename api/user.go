@@ -17,6 +17,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/gomail.v2"
 )
@@ -41,23 +42,33 @@ type (
 		AuthToken string `json:"authToken"`
 	}
 
+	UpdateProfileInput struct {
+		FirstName string  `json:"firstName"`
+		LastName  *string `json:"lastName"`
+		Avatar    *string `json:"avatar"`
+		Email     string  `json:"email" validate:"email"`
+		Password  string  `json:"password" validate:"min=8"`
+	}
+
 	UserFunc struct {
 		RegisterFunc           func(RegisterUserInput) error
 		LoginFunc              func(LoginUserInput) (LoginUserOutput, error)
 		ConfirmUserAccountFunc func(string) (*User, error)
+		UpdateProfileFunc      func(string, UpdateProfileInput) error
+		GetProfileFunc         func(string) (*User, error)
 	}
 
 	UserStatus string
 
 	User struct {
 		ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-		FirstName string             `bson:"firstName" json:"firstName"`
-		LastName  *string            `bson:"lastName" json:"lastName"`
-		Username  string             `bson:"username" json:"username"`
-		Email     string             `bson:"email" json:"email"`
-		Avatar    *string            `bson:"avatar" json:"avatar"`
-		Password  string             `bson:"password" json:"-"`
-		Status    UserStatus         `bson:"status" json:"-"`
+		FirstName string             `bson:"firstName,omitempty" json:"firstName"`
+		LastName  *string            `bson:"lastName,omitempty" json:"lastName"`
+		Username  string             `bson:"username,omitempty" json:"username"`
+		Email     string             `bson:"email,omitempty" json:"email"`
+		Avatar    *string            `bson:"avatar,omitempty" json:"avatar"`
+		Password  string             `bson:"password,omitempty" json:"-"`
+		Status    UserStatus         `bson:"status,omitempty" json:"-"`
 		CreatedAt time.Time          `bson:"createdAt,omitempty" json:"createdAt"`
 		UpdatedAt time.Time          `bson:"updatedAt,omitempty" json:"updatedAt"`
 		DeletedAt time.Time          `bson:"deletedAt,omitempty" json:"-"`
@@ -81,11 +92,25 @@ var (
 func (u *User) Save() error {
 	u.CreatedAt = time.Now()
 	u.UpdatedAt = time.Now()
-	res, err := MongoDatabase.Collection(users).InsertOne(context.TODO(), u)
+
+	filter := bson.M{
+		"_id": u.ID,
+	}
+	upsert := func() *bool {
+		b := true
+		return &b
+	}()
+	res, err := MongoDatabase.Collection(users).UpdateOne(context.Background(), filter, bson.M{"$set": u}, &options.UpdateOptions{
+		Upsert: upsert,
+	})
 	if err != nil {
 		return err
 	}
-	u.ID = res.InsertedID.(primitive.ObjectID)
+
+	if u.ID == primitive.NilObjectID {
+		u.ID = res.UpsertedID.(primitive.ObjectID)
+	}
+
 	return nil
 }
 
@@ -254,11 +279,46 @@ func sendConfirmationEmail(to, token string) {
 	log.Printf("[sendConfirmationEmail] Confirmation email successfully sent to %s", to)
 }
 
+func GetUserProfile(userID string) (*User, error) {
+	user, err := FindUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func UpdateUserProfile(userID string, input UpdateProfileInput) error {
+	user, err := FindUserByID(userID)
+	if err != nil {
+		return err
+	}
+
+	user.FirstName = input.FirstName
+	user.LastName = input.LastName
+	user.Email = input.Email
+	user.Avatar = input.Avatar
+
+	if input.Password != "" {
+		hashPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		user.Password = string(hashPassword)
+	}
+	if err := user.Save(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func UserDefaultHandler() *UserFunc {
 	return &UserFunc{
 		RegisterFunc:           RegisterUser,
 		ConfirmUserAccountFunc: ConfirmUserAccount,
 		LoginFunc:              Login,
+		GetProfileFunc:         GetUserProfile,
+		UpdateProfileFunc:      UpdateUserProfile,
 	}
 }
 
@@ -437,5 +497,71 @@ func (f *UserFunc) LoginHandler(ctx *gin.Context) {
 		"status":  "success",
 		"message": "User authenticated",
 		"data":    loginOut,
+	})
+}
+
+func (f *UserFunc) GetProfileHandler(ctx *gin.Context) {
+	userCtx, ok := ctx.Get("user")
+	if !ok {
+		log.Println("[GetProfileHandler] Unable to get current user")
+		ctx.JSON(422, gin.H{
+			"status":   "error",
+			"messages": "Failed to get user profile",
+		})
+		return
+	}
+	user := userCtx.(*User)
+
+	userProfile, err := f.GetProfileFunc(user.ID.Hex())
+	if err != nil {
+		log.Printf("[GetProfileHandler] %v", err)
+		ctx.JSON(422, gin.H{
+			"status":   "error",
+			"messages": "Failed to get user profile",
+		})
+	}
+
+	ctx.JSON(200, gin.H{
+		"status":  "success",
+		"message": "Successfully get user profile",
+		"data":    userProfile,
+	})
+}
+
+func (f *UserFunc) UpdateProfileHandler(ctx *gin.Context) {
+	userCtx, ok := ctx.Get("user")
+	if !ok {
+		log.Println("[GetProfileHandler] Unable to get current user")
+		ctx.JSON(422, gin.H{
+			"status":   "error",
+			"messages": "Failed to get user profile",
+		})
+		return
+	}
+	user := userCtx.(*User)
+
+	input := UpdateProfileInput{}
+	if err := ctx.ShouldBind(&input); err != nil {
+		log.Printf("[UpdateProfileHandler] %v", err)
+		ctx.JSON(400, gin.H{
+			"status":  "error",
+			"message": "Failed to get user profile, please check your request data",
+		})
+		return
+	}
+
+	err := f.UpdateProfileFunc(user.ID.Hex(), input)
+	if err != nil {
+		log.Printf("[UpdateProfileHandler] %v", err)
+		ctx.JSON(422, gin.H{
+			"status":  "error",
+			"message": "Failed to update user profile",
+		})
+		return
+	}
+
+	ctx.JSON(200, gin.H{
+		"status":  "success",
+		"message": "Successfully update user profile",
 	})
 }
