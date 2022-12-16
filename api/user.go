@@ -6,12 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"go.mongodb.org/mongo-driver/bson"
@@ -50,12 +52,17 @@ type (
 		Password  string  `json:"password" validate:"min=8"`
 	}
 
+	UploadUserAvatarOutput struct {
+		ImageURL string `json:"imageUrl"`
+	}
+
 	UserFunc struct {
 		RegisterFunc           func(RegisterUserInput) error
 		LoginFunc              func(LoginUserInput) (LoginUserOutput, error)
 		ConfirmUserAccountFunc func(string) (*User, error)
 		UpdateProfileFunc      func(string, UpdateProfileInput) error
 		GetProfileFunc         func(string) (*User, error)
+		UploadUserAvatarFunc   func(*multipart.FileHeader) (string, error)
 	}
 
 	UserStatus string
@@ -312,6 +319,23 @@ func UpdateUserProfile(userID string, input UpdateProfileInput) error {
 	return nil
 }
 
+func UploadUserAvatar(file *multipart.FileHeader) (string, error) {
+	filename := file.Filename
+	rawFile, err := file.Open()
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := cld.Upload.Upload(context.Background(), rawFile, uploader.UploadParams{PublicID: filename})
+	if err != nil {
+		return "", err
+	}
+
+	imageURL := resp.SecureURL
+
+	return imageURL, nil
+}
+
 func UserDefaultHandler() *UserFunc {
 	return &UserFunc{
 		RegisterFunc:           RegisterUser,
@@ -319,6 +343,7 @@ func UserDefaultHandler() *UserFunc {
 		LoginFunc:              Login,
 		GetProfileFunc:         GetUserProfile,
 		UpdateProfileFunc:      UpdateUserProfile,
+		UploadUserAvatarFunc:   UploadUserAvatar,
 	}
 }
 
@@ -533,8 +558,8 @@ func (f *UserFunc) UpdateProfileHandler(ctx *gin.Context) {
 	if !ok {
 		log.Println("[GetProfileHandler] Unable to get current user")
 		ctx.JSON(422, gin.H{
-			"status":   "error",
-			"messages": "Failed to get user profile",
+			"status":  "error",
+			"message": "Failed to get user profile",
 		})
 		return
 	}
@@ -563,5 +588,37 @@ func (f *UserFunc) UpdateProfileHandler(ctx *gin.Context) {
 	ctx.JSON(200, gin.H{
 		"status":  "success",
 		"message": "Successfully update user profile",
+	})
+}
+
+func (f *UserFunc) UploadUserAvatarHandler(ctx *gin.Context) {
+	file, err := ctx.FormFile("avatar")
+	if err != nil {
+		log.Printf("[UploadUserAvatarHandler] %v", err)
+		ctx.JSON(422, gin.H{
+			"status":  "error",
+			"message": "Unable to get user avatar file",
+		})
+		return
+	}
+
+	url, err := f.UploadUserAvatarFunc(file)
+	if err != nil {
+		log.Printf("[UploadUserAvatarHandler] %v", err)
+		ctx.JSON(422, gin.H{
+			"status":  "error",
+			"message": "Failed to upload user avatar, please try again later",
+		})
+		return
+	}
+
+	res := UploadUserAvatarOutput{
+		ImageURL: url,
+	}
+
+	ctx.JSON(200, gin.H{
+		"status":  "success",
+		"message": "Successfully upload user avatar",
+		"data":    res,
 	})
 }

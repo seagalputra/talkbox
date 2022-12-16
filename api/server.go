@@ -14,9 +14,13 @@ func StartServer() error {
 	}
 
 	if err := ConnectDatabase(); err != nil {
-		log.Fatalf("StartServer: %v", err)
+		log.Fatalf("[StartServer] %v", err)
 	}
 	ConnectToRedis()
+
+	if err := LoadCloudinary(AppConfig.CloudinaryCloudName, AppConfig.CloudinaryAPIKey, AppConfig.CloudinaryAPISecret); err != nil {
+		log.Fatalf("[StartServer] %v", err)
+	}
 
 	userHandler := UserDefaultHandler()
 	messageHandler := MessageDefaultHandler()
@@ -37,6 +41,7 @@ func StartServer() error {
 		v1.GET("/users/confirm_account", userHandler.ConfirmUserAccountHandler)
 		v1.GET("/users/profile", AuthenticateUser(), userHandler.GetProfileHandler)
 		v1.PATCH("/users", AuthenticateUser(), userHandler.UpdateProfileHandler)
+		v1.POST("/users/avatar", AuthenticateUser(), userHandler.UploadUserAvatarHandler)
 		v1.GET("/rooms", AuthenticateUser(), roomHandler.GetRoomsHandler)
 		v1.GET("/rooms/:room_id/messages", AuthenticateUser(), messageHandler.GetMessagesHandler)
 	}

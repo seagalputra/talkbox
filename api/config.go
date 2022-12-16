@@ -20,6 +20,9 @@ type (
 		SMTPPassword         string `env:"SMTP_PASSWORD"`
 		EmailSenderName      string `env:"EMAIL_SENDER_NAME"`
 		EmailConfirmationURL string `env:"EMAIL_CONFIRMATION_URL"`
+		CloudinaryCloudName  string `env:"CLOUDINARY_CLOUD_NAME"`
+		CloudinaryAPIKey     string `env:"CLOUDINARY_API_KEY"`
+		CloudinaryAPISecret  string `env:"CLOUDINARY_API_SECRET"`
 	}
 )
 
