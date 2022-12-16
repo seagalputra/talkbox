@@ -1,5 +1,5 @@
 import { AxiosError } from "axios";
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import Image from "next/image";
 import http from "../lib/http";
@@ -26,6 +26,7 @@ type UpdateProfileOutput = {
 const UserProfileModal = ({ openUserProfileModal }: any) => {
   const [errorResponse, setErrorResponse] = useState<UpdateProfileOutput>();
   const [userProfile, setUserProfile] = useState<UserProfile>({});
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
   const { register, handleSubmit, setValue } = useForm<UpdateUserInput>();
 
   useEffect(() => {
@@ -51,12 +52,41 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
   }, [setValue]);
 
   const onSubmitUserProfile: SubmitHandler<UpdateUserInput> = async (data) => {
+    const requestData = {
+      ...data,
+      avatar: avatarUrl,
+    };
+
     try {
-      await http.patch("/users", data, {
+      await http.patch("/users", requestData, {
         withCredentials: true,
       });
 
       openUserProfileModal();
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        const errResponse = err.response?.data;
+        setErrorResponse(errResponse);
+      }
+    }
+  };
+
+  const onSubmitAvatar = async (event: ChangeEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    const avatarFile: File | null | undefined = event.target.files?.item(0);
+
+    const formData = new FormData();
+    if (avatarFile) {
+      formData.append("avatar", avatarFile);
+    }
+
+    try {
+      const response = await http.post("/users/avatar", formData, {
+        withCredentials: true,
+      });
+      const data = response.data?.data;
+
+      setAvatarUrl(data?.imageUrl);
     } catch (err) {
       if (err instanceof AxiosError) {
         const errResponse = err.response?.data;
@@ -104,7 +134,11 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
           />
 
           <div className="rounded-full w-24 absolute top-0 w-full h-full flex items-center justify-center text-transparent hover:bg-black/[0.4] hover:text-white transition duration-200">
-            <input type="file" className="opacity-0 absolute" />
+            <input
+              type="file"
+              onChange={onSubmitAvatar}
+              className="opacity-0 absolute"
+            />
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
