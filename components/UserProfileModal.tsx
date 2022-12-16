@@ -1,17 +1,69 @@
+import { AxiosError } from "axios";
+import { useState, useEffect } from "react";
+import { useForm, SubmitHandler } from "react-hook-form";
+import http from "../lib/http";
+
 type UpdateUserInput = {
   firstName?: string;
   lastName?: string;
   username?: string;
+  email?: string;
   password?: string;
   avatar?: string;
 };
 
-type UpdateUserOutput = {
+type UserProfile = UpdateUserInput & {
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+type UpdateProfileOutput = {
   status?: string;
   message?: string;
 };
 
 const UserProfileModal = ({ openUserProfileModal }: any) => {
+  const [errorResponse, setErrorResponse] = useState<UpdateProfileOutput>({});
+  const [userProfile, setUserProfile] = useState<UserProfile>({});
+  const { register, handleSubmit, setValue } = useForm<UpdateUserInput>();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const response = await http.get("/users/profile", {
+          withCredentials: true,
+        });
+
+        const data: UserProfile = response?.data.data;
+
+        setValue("firstName", data?.firstName);
+        setValue("lastName", data?.lastName);
+        setValue("email", data?.email);
+        setValue("username", data?.username);
+
+        setUserProfile(data);
+      } catch (e) {
+        // TODO: handle error when failed to fetch user profile
+        console.error(e);
+      }
+    })();
+  }, [setValue]);
+
+  const onSubmitUserProfile: SubmitHandler<UpdateUserInput> = async (data) => {
+    try {
+      await http.patch("/users", data, {
+        withCredentials: true,
+      });
+
+      openUserProfileModal();
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        const errResponse = err.response?.data;
+        setErrorResponse(errResponse);
+      }
+    }
+  };
+
   return (
     <div className="fixed z-10 top-0 left-0 w-full h-full overflow-auto bg-black/[0.4] flex items-center justify-center">
       <div className="bg-white mx-auto border w-1/3 rounded p-6">
@@ -65,7 +117,10 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
             </svg>
           </div>
         </div>
-        <form className="mt-4 grid grid-cols-2 gap-6">
+        <form
+          onSubmit={handleSubmit(onSubmitUserProfile)}
+          className="mt-4 grid grid-cols-2 gap-6"
+        >
           <div className="col-span-1">
             <label
               htmlFor="firstName"
@@ -74,6 +129,7 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
               First Name
             </label>
             <input
+              {...register("firstName")}
               type="text"
               name="firstName"
               id="firstName"
@@ -88,6 +144,7 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
               Last Name
             </label>
             <input
+              {...register("lastName")}
               type="text"
               name="lastName"
               id="lastName"
@@ -102,6 +159,7 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
               Email
             </label>
             <input
+              {...register("email")}
               type="text"
               name="email"
               id="email"
@@ -116,6 +174,7 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
               Username
             </label>
             <input
+              {...register("username")}
               type="text"
               name="username"
               id="username"
@@ -130,6 +189,7 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
               Password
             </label>
             <input
+              {...register("password")}
               type="text"
               name="password"
               id="password"
