@@ -62,7 +62,7 @@ type (
 		ConfirmUserAccountFunc func(string) (*User, error)
 		UpdateProfileFunc      func(string, UpdateProfileInput) error
 		GetProfileFunc         func(string) (*User, error)
-		UploadUserAvatarFunc   func(*multipart.FileHeader) (string, error)
+		UploadUserAvatarFunc   func(*multipart.FileHeader, string) (string, error)
 	}
 
 	UserStatus string
@@ -200,6 +200,29 @@ func FindUserByUsername(username string) (*User, error) {
 	return &user, nil
 }
 
+func UpdateUserAvatarByID(userID, avatarURL string) error {
+	objID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return fmt.Errorf("[UpdateUserAvatarByID] %v", err)
+	}
+
+	filter := bson.M{
+		"_id": objID,
+	}
+
+	_, err = MongoDatabase.Collection(users).UpdateOne(context.Background(), filter, bson.M{
+		"$set": bson.M{
+			"avatar": avatarURL,
+		},
+	})
+
+	if err != nil {
+		return fmt.Errorf("[UpdateUserAvatarByID] %v", err)
+	}
+
+	return nil
+}
+
 func RegisterUser(input RegisterUserInput) error {
 	user := &User{
 		FirstName: input.FirstName,
@@ -319,19 +342,22 @@ func UpdateUserProfile(userID string, input UpdateProfileInput) error {
 	return nil
 }
 
-func UploadUserAvatar(file *multipart.FileHeader) (string, error) {
+func UploadUserAvatar(file *multipart.FileHeader, userID string) (string, error) {
 	filename := file.Filename
 	rawFile, err := file.Open()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("[UploadUserAvatar] %v", err)
 	}
 
 	resp, err := cld.Upload.Upload(context.Background(), rawFile, uploader.UploadParams{PublicID: filename})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("[UploadUserAvatar] %v", err)
 	}
 
 	imageURL := resp.SecureURL
+	if err := UpdateUserAvatarByID(userID, imageURL); err != nil {
+		return "", fmt.Errorf("[UploadUserAvatar] %v", err)
+	}
 
 	return imageURL, nil
 }
@@ -592,6 +618,17 @@ func (f *UserFunc) UpdateProfileHandler(ctx *gin.Context) {
 }
 
 func (f *UserFunc) UploadUserAvatarHandler(ctx *gin.Context) {
+	userCtx, ok := ctx.Get("user")
+	if !ok {
+		log.Println("[UploadUserAvatarHandler] Unable to get current user")
+		ctx.JSON(422, gin.H{
+			"status":  "error",
+			"message": "Failed to get user profile",
+		})
+		return
+	}
+	user := userCtx.(*User)
+
 	file, err := ctx.FormFile("avatar")
 	if err != nil {
 		log.Printf("[UploadUserAvatarHandler] %v", err)
@@ -602,7 +639,8 @@ func (f *UserFunc) UploadUserAvatarHandler(ctx *gin.Context) {
 		return
 	}
 
-	url, err := f.UploadUserAvatarFunc(file)
+	userID := user.ID.Hex()
+	url, err := f.UploadUserAvatarFunc(file, userID)
 	if err != nil {
 		log.Printf("[UploadUserAvatarHandler] %v", err)
 		ctx.JSON(422, gin.H{
