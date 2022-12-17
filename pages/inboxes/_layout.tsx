@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import React, {
+import {
   createContext,
   useCallback,
   useEffect,
@@ -11,6 +11,7 @@ import Image from "next/image";
 import http from "../../lib/http";
 import useCurrentUser from "../../hook/useCurrentUser";
 import UserProfileModal from "../../components/UserProfileModal";
+import NewMessageModal from "../../components/NewMessageModal";
 
 export const RoomContext = createContext<any>({});
 
@@ -20,6 +21,8 @@ export default function InboxesLayout({ children }: { children: any }) {
   const [currentUser, setCurrentUser] = useCurrentUser();
   const [isFetchingRooms, setIsFetchingRooms] = useState<boolean>(false);
   const [isUserProfileModalOpen, setIsUserProfileModalOpen] =
+    useState<boolean>(false);
+  const [isNewMessageModalOpen, setIsNewMessageModalOpen] =
     useState<boolean>(false);
 
   useEffect(() => {
@@ -58,6 +61,11 @@ export default function InboxesLayout({ children }: { children: any }) {
   const openUserProfileModal = () =>
     setIsUserProfileModalOpen((prevValue) => !prevValue);
 
+  const openNewMessageModal = (event: any) => {
+    event.preventDefault();
+    setIsNewMessageModalOpen((prevValue) => !prevValue);
+  };
+
   return (
     <RoomContext.Provider value={roomContextValue}>
       <main className="container mx-auto">
@@ -69,7 +77,10 @@ export default function InboxesLayout({ children }: { children: any }) {
             <div className="flex items-center w-full justify-between px-6 sticky top-0 bg-transparent backdrop-blur">
               <h1 className="font-bold text-3xl text-slate-800 py-4">Inbox</h1>
               <div className="flex gap-2 items-center">
-                <button className="hover:bg-slate-100 hover:rounded-full py-2 p-2">
+                <button
+                  onClick={openNewMessageModal}
+                  className="hover:bg-slate-100 hover:rounded-full py-2 p-2"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -178,6 +189,10 @@ export default function InboxesLayout({ children }: { children: any }) {
 
         {isUserProfileModalOpen ? (
           <UserProfileModal openUserProfileModal={openUserProfileModal} />
+        ) : null}
+
+        {isNewMessageModalOpen ? (
+          <NewMessageModal openNewMessageModal={openNewMessageModal} />
         ) : null}
       </main>
     </RoomContext.Provider>
