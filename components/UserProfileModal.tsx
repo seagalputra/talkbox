@@ -1,6 +1,8 @@
 import { AxiosError } from "axios";
 import { useState, useEffect, ChangeEvent } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
+import { useCookies } from "react-cookie";
+import { useRouter } from "next/router";
 import Image from "next/image";
 import http from "../lib/http";
 
@@ -28,6 +30,8 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
   const [userProfile, setUserProfile] = useState<UserProfile>({});
   const { register, handleSubmit, setValue } = useForm<UpdateUserInput>();
   const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
+  const [, , removeCookie] = useCookies(["talkbox"]);
+  const router = useRouter();
 
   useEffect(() => {
     (async () => {
@@ -97,6 +101,12 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
   const visiblePassword = (event: any) => {
     event.preventDefault();
     setIsPasswordVisible((prevValue) => !prevValue);
+  };
+
+  const onUserLogout = (event: any) => {
+    event.preventDefault();
+    removeCookie("talkbox");
+    router.push("/");
   };
 
   return (
@@ -283,10 +293,21 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
               </button>
             </div>
           </div>
-          <button className="col-span-2 text-center bg-indigo-500 text-white font-medium rounded-md py-2 hover:bg-indigo-700 hover:cursor-pointer">
+          <button
+            type="submit"
+            className="col-span-2 text-center bg-indigo-500 text-white font-medium rounded-md py-2 hover:bg-indigo-700 hover:cursor-pointer"
+          >
             Submit
           </button>
         </form>
+
+        <button
+          type="button"
+          onClick={onUserLogout}
+          className="w-full text-center text-red-500 font-medium rounded-md py-2 mt-2 hover:cursor-pointer"
+        >
+          Logout
+        </button>
       </div>
     </div>
   );

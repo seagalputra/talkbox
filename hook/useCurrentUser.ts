@@ -6,7 +6,7 @@ const useCurrentUser = () => {
   const [currentUser, setCurrentUser] = useState<any>({});
 
   useEffect(() => {
-    if (cookies) {
+    if (cookies.talkbox) {
       const [, payload] = cookies.talkbox?.split(".");
       setCurrentUser(JSON.parse(Buffer.from(payload, "base64").toString()));
     }
