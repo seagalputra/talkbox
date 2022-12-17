@@ -182,6 +182,28 @@ func FindRoomsByUserID(userID *primitive.ObjectID, cursorObj map[string]interfac
 	return rooms, nil
 }
 
+func UpdateAvatarInParticipants(userID, avatarURL string) {
+	objID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		log.Printf("[UpdateAvatarInParticipants] %v", err)
+		return
+	}
+
+	filter := bson.M{
+		"participants.id": objID,
+	}
+
+	update := bson.M{
+		"participants.$.avatar": avatarURL,
+	}
+
+	_, err = MongoDatabase.Collection(rooms).UpdateMany(context.Background(), filter, bson.M{"$set": update})
+	if err != nil {
+		log.Printf("[UpdateAvatarInParticipants] %v", err)
+		return
+	}
+}
+
 func RoomDefaultHandler() *RoomFunc {
 	return &RoomFunc{
 		GetRoomsFunc: GetRooms,

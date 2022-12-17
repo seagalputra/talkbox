@@ -359,6 +359,8 @@ func UploadUserAvatar(file *multipart.FileHeader, userID string) (string, error)
 		return "", fmt.Errorf("[UploadUserAvatar] %v", err)
 	}
 
+	go UpdateAvatarInParticipants(userID, imageURL)
+
 	return imageURL, nil
 }
 
