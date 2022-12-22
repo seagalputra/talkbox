@@ -22,8 +22,8 @@ ENV GIN_MODE=release
 RUN addgroup --system --gid 1001 golang
 RUN adduser --system --uid 1001 talkbox
 
-COPY --from=builder /app/.env .
-COPY --from=builder /app/talkbox .
+COPY --from=builder --chown=talkbox:golang /app/.env .
+COPY --from=builder --chown=talkbox:golang /app/talkbox .
 
 USER talkbox
 

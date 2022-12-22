@@ -24,8 +24,8 @@ RUN adduser --system --uid 1001 talkbox
 
 COPY --from=builder /app/public ./public
 
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=talkbox:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=talkbox:nodejs /app/.next/static ./.next/static
 
 USER talkbox
 
