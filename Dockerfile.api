@@ -27,6 +27,6 @@ COPY --from=builder /app/talkbox .
 
 USER talkbox
 
-EXPOSE 4000
+EXPOSE 8080
 
 ENTRYPOINT [ "/app/talkbox" ]
