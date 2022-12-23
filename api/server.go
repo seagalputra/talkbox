@@ -9,9 +9,7 @@ import (
 )
 
 func StartServer() error {
-	if err := LoadAppConfig(); err != nil {
-		log.Printf("Unable to load config file: %v", err)
-	}
+	LoadAppConfig()
 
 	if err := ConnectDatabase(); err != nil {
 		log.Fatalf("[StartServer] %v", err)

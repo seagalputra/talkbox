@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"os"
 	"reflect"
 
@@ -30,10 +31,10 @@ var AppConfig appConfig
 
 const tagName = "env"
 
-func LoadAppConfig() error {
+func LoadAppConfig() {
 	err := godotenv.Load()
 	if err != nil {
-		return err
+		log.Printf("[LoadAppConfig] %v, switch back to OS env", err)
 	}
 
 	AppConfig = appConfig{}
@@ -47,6 +48,4 @@ func LoadAppConfig() error {
 		osEnv := os.Getenv(tag)
 		reflect.ValueOf(&AppConfig).Elem().FieldByName(field.Name).SetString(osEnv)
 	}
-
-	return nil
 }
