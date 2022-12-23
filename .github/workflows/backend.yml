@@ -28,11 +28,6 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
-      - name: Create env file
-        run: |
-          echo "${{ secrets.ENV_FILE }}"
-          echo "${{ secrets.ENV_FILE }}" > .env
-          tail .env
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Deploy to fly.io
         run: flyctl deploy --remote-only --config fly.api.toml
