@@ -1,11 +1,27 @@
 name: Backend
-run-name: ${{ github.actor }} is testing out GitHub Actions
-on: [push]
+run-name: Build and deploy Talkbox API
+on:
+  push:
+    branches:
+      - main
 jobs:
-  Explore-Github-Actions:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Hello from GitHub Actions"
       - name: Check out repository code
         uses: actions/checkout@v3
-      - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+          cache: true
+      - name: Download dependencies
+        run: go mod download
+      - name: Run unit test
+        run: go test -v ./api
+      - name: Build API
+        run: go build -o talkbox
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Deploy to server"
