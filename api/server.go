@@ -26,7 +26,12 @@ func StartServer() error {
 	r := gin.Default()
 
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{"http://127.0.0.1:3000", "http://localhost:3000"}
+	corsConfig.AllowOrigins = []string{
+		"http://127.0.0.1:3000",
+		"http://localhost:3000",
+		"https://talkbox.fly.dev",
+		"http://talkbox.fly.dev",
+	}
 	corsConfig.AllowCredentials = true
 	r.Use(cors.New(corsConfig))
 	r.Use(ParseAuthCookies())
