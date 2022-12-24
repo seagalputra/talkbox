@@ -1,6 +1,6 @@
-# fly.toml file generated for talkbox-web on 2022-12-22T22:07:23+07:00
+# fly.toml file generated for talkbox on 2022-12-22T22:07:23+07:00
 
-app = "talkbox-web"
+app = "talkbox"
 kill_signal = "SIGINT"
 kill_timeout = 5
 processes = []

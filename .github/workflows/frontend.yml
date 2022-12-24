@@ -1,0 +1,24 @@
+name: Frontend
+run-name: Run test and deploy Talkbox web app
+on:
+  push:
+    branches:
+      - main
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Set up Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+      - name: Run install
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: install --frozen-lockfile
+      - name: Run lint
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: lint
