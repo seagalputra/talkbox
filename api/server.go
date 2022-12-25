@@ -27,10 +27,8 @@ func StartServer() error {
 
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = []string{
-		"http://127.0.0.1:3000",
-		"http://localhost:3000",
-		"https://talkbox.fly.dev",
-		"http://talkbox.fly.dev",
+		"http://127.0.0.1:8080",
+		"http://localhost:8080",
 	}
 	corsConfig.AllowCredentials = true
 	r.Use(cors.New(corsConfig))

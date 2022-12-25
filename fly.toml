@@ -6,11 +6,11 @@ kill_timeout = 5
 processes = []
 
 [build]
-  dockerfile = "Dockerfile.web"
+  dockerfile = "Dockerfile"
 
 [build.args]
-  NEXT_PUBLIC_API_BASE_URL="https://talkbox-api.fly.dev"
-  NEXT_PUBLIC_WS_BASE_URL="wss://talkbox-api.fly.dev"
+  NEXT_PUBLIC_API_BASE_URL="http://127.0.0.1:8081"
+  NEXT_PUBLIC_WS_BASE_URL="ws://127.0.0.1:8081"
 
 [env]
 
