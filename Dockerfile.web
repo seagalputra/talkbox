@@ -1,0 +1,39 @@
+FROM node:16-alpine AS deps
+
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+COPY package.json yarn.lock* ./
+RUN yarn --frozen-lockfile
+
+FROM node:16-alpine AS builder
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+ARG NEXT_PUBLIC_API_BASE_URL
+ARG NEXT_PUBLIC_WS_BASE_URL
+
+RUN yarn build
+
+FROM node:16-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 talkbox
+
+COPY --from=builder /app/public ./public
+
+COPY --from=builder --chown=talkbox:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=talkbox:nodejs /app/.next/static ./.next/static
+
+USER talkbox
+
+EXPOSE 8080
+
+ENV PORT 8080
+
+CMD ["node", "server.js"]
