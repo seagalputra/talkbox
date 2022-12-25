@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"mime/multipart"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -541,9 +542,9 @@ func (f *UserFunc) LoginHandler(ctx *gin.Context) {
 	}
 
 	splittedToken := strings.Split(loginOut.AuthToken, ".")
-	// ctx.SetSameSite(http.SameSiteNoneMode)
-	ctx.SetCookie("talkbox", strings.Join([]string{splittedToken[0], splittedToken[1]}, "."), 3600, "/", "", true, false)
-	ctx.SetCookie("talkbox_sign", splittedToken[2], 3600, "/", "", true, true)
+	ctx.SetSameSite(http.SameSiteNoneMode)
+	ctx.SetCookie("talkbox", strings.Join([]string{splittedToken[0], splittedToken[1]}, "."), 3600, "/", ".fly.dev", true, false)
+	ctx.SetCookie("talkbox_sign", splittedToken[2], 3600, "/", ".fly.dev", true, true)
 
 	ctx.JSON(200, gin.H{
 		"status":  "success",
