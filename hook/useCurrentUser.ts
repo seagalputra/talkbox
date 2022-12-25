@@ -1,16 +1,34 @@
+import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
-import { useCookies } from "react-cookie";
 
 const useCurrentUser = () => {
-  const [cookies] = useCookies(["talkbox"]);
   const [currentUser, setCurrentUser] = useState<any>({});
+  const router = useRouter();
 
   useEffect(() => {
-    if (cookies.talkbox) {
-      const [, payload] = cookies.talkbox?.split(".");
-      setCurrentUser(JSON.parse(Buffer.from(payload, "base64").toString()));
+    const pathname = window.location.pathname;
+    const authToken = localStorage.getItem("talkbox");
+    if (pathname === "/") {
+      if (authToken) {
+        if (router.isReady) {
+          const tokens = authToken.split(".");
+          setCurrentUser(
+            JSON.parse(Buffer.from(tokens[1], "base64").toString())
+          );
+          router.push("/inboxes");
+        }
+      }
+    } else {
+      if (authToken) {
+        const tokens = authToken.split(".");
+        setCurrentUser(JSON.parse(Buffer.from(tokens[1], "base64").toString()));
+      } else {
+        if (router.isReady) {
+          router.push("/");
+        }
+      }
     }
-  }, [cookies]);
+  }, [router, router.isReady]);
 
   return [currentUser, setCurrentUser];
 };

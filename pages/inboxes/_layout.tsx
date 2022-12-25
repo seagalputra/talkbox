@@ -28,9 +28,7 @@ export default function InboxesLayout({ children }: { children: any }) {
   useEffect(() => {
     (async () => {
       try {
-        const response = await http.get("/rooms", {
-          withCredentials: true,
-        });
+        const response = await http.get("/rooms");
 
         setRooms(response.data?.data);
       } catch (e) {

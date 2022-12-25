@@ -1,7 +1,6 @@
 import { AxiosError } from "axios";
 import { useState, useEffect, ChangeEvent } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
-import { useCookies } from "react-cookie";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import http from "../lib/http";
@@ -30,15 +29,12 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
   const [userProfile, setUserProfile] = useState<UserProfile>({});
   const { register, handleSubmit, setValue } = useForm<UpdateUserInput>();
   const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
-  const [, , removeCookie] = useCookies(["talkbox"]);
   const router = useRouter();
 
   useEffect(() => {
     (async () => {
       try {
-        const response = await http.get("/users/profile", {
-          withCredentials: true,
-        });
+        const response = await http.get("/users/profile");
 
         const data: UserProfile = response?.data.data;
 
@@ -57,9 +53,7 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
 
   const onSubmitUserProfile: SubmitHandler<UpdateUserInput> = async (data) => {
     try {
-      await http.patch("/users", data, {
-        withCredentials: true,
-      });
+      await http.patch("/users", data);
 
       openUserProfileModal();
     } catch (err) {
@@ -80,9 +74,7 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
     }
 
     try {
-      const response = await http.post("/users/avatar", formData, {
-        withCredentials: true,
-      });
+      const response = await http.post("/users/avatar", formData);
       const data = response.data?.data;
 
       const imageUrl = data?.imageUrl;
@@ -105,7 +97,7 @@ const UserProfileModal = ({ openUserProfileModal }: any) => {
 
   const onUserLogout = (event: any) => {
     event.preventDefault();
-    removeCookie("talkbox");
+    localStorage.removeItem("talkbox");
     router.push("/");
   };
 

@@ -26,7 +26,8 @@ const Inboxes: NextPageWithLayout<any> = () => {
   useEffect(() => {
     if (router.isReady) {
       const { roomId } = router.query;
-      const url = `${process.env.NEXT_PUBLIC_WS_BASE_URL}/rooms/${roomId}`;
+      const authToken = localStorage.getItem("talkbox");
+      const url = `${process.env.NEXT_PUBLIC_WS_BASE_URL}/rooms/${roomId}?authToken=${authToken}`;
       let ws: any;
       if (typeof window !== "undefined") {
         ws = new WebSocket(url);
@@ -60,7 +61,6 @@ const Inboxes: NextPageWithLayout<any> = () => {
             params: {
               limit: 20,
             },
-            withCredentials: true,
           });
 
           setMessages(response.data?.data);

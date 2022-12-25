@@ -4,6 +4,7 @@ import Link from "next/link";
 import http from "../lib/http";
 import { AxiosError } from "axios";
 import { useRouter } from "next/router";
+import useCurrentUser from "../hook/useCurrentUser";
 
 type UserLoginInput = {
   username: string;
@@ -19,13 +20,12 @@ export default function Home() {
   const [errorResponse, setErrorResponse] = useState<UserLoginErrorOutput>();
   const { register, handleSubmit } = useForm<UserLoginInput>();
   const router = useRouter();
+  useCurrentUser();
 
   const onSubmitLogin: SubmitHandler<UserLoginInput> = async (data) => {
     try {
-      await http.post("/auth/login", data, {
-        withCredentials: true,
-      });
-
+      const response = await http.post("/auth/login", data);
+      localStorage.setItem("talkbox", response.data?.data?.authToken);
       router.push("/inboxes");
     } catch (err) {
       if (err instanceof AxiosError) {

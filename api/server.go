@@ -33,8 +33,8 @@ func StartServer() error {
 		"http://talkbox.fly.dev",
 	}
 	corsConfig.AllowCredentials = true
+	corsConfig.AllowHeaders = []string{"Authorization", "Content-Type"}
 	r.Use(cors.New(corsConfig))
-	r.Use(ParseAuthCookies())
 
 	api := r.Group("api")
 	v1 := api.Group("v1")
@@ -49,7 +49,7 @@ func StartServer() error {
 		v1.GET("/rooms/:room_id/messages", AuthenticateUser(), messageHandler.GetMessagesHandler)
 	}
 
-	r.GET("/rooms/:room_id", AuthenticateUser(), messageHandler.WSHandler)
+	r.GET("/rooms/:room_id", AuthenticateWS(), messageHandler.WSHandler)
 
 	port := fmt.Sprintf(":%s", AppConfig.ServerPort)
 	if err := r.Run(port); err != nil {
